@@ -1102,6 +1102,12 @@ def dashboard_html() -> str:
         if (choice === "light" || choice === "dark") {
           document.documentElement.dataset.theme = choice;
         }
+        var languageChoice = localStorage.getItem("phaseharness-dashboard-language") || "auto";
+        var resolvedLanguage = languageChoice === "ko" || languageChoice === "en"
+          ? languageChoice
+          : (/^ko\b/i.test(navigator.language || "") ? "ko" : "en");
+        document.documentElement.dataset.languageChoice = languageChoice;
+        document.documentElement.lang = resolvedLanguage;
       } catch (error) {}
     })();
   </script>
@@ -1342,7 +1348,14 @@ def dashboard_html() -> str:
       gap: 9px;
       min-width: 260px;
     }
-    .theme-control {
+    .header-controls {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .theme-control,
+    .language-control {
       display: inline-flex;
       align-items: center;
       gap: 2px;
@@ -1351,7 +1364,8 @@ def dashboard_html() -> str:
       padding: 2px;
       background: var(--color-panel-muted);
     }
-    .theme-btn {
+    .theme-btn,
+    .language-btn {
       appearance: none;
       border: 0;
       border-radius: 999px;
@@ -1364,15 +1378,18 @@ def dashboard_html() -> str:
       line-height: 1;
       padding: 6px 9px;
     }
-    .theme-btn:hover {
+    .theme-btn:hover,
+    .language-btn:hover {
       color: var(--text);
       background: var(--color-blue-subtle);
     }
-    .theme-btn.selected {
+    .theme-btn.selected,
+    .language-btn.selected {
       color: var(--blue);
       background: var(--color-blue-soft);
     }
-    .theme-btn:focus-visible {
+    .theme-btn:focus-visible,
+    .language-btn:focus-visible {
       outline: 2px solid var(--color-blue-focus);
       outline-offset: 2px;
     }
@@ -2289,7 +2306,8 @@ def dashboard_html() -> str:
     @media (max-width: 980px) {
       header { flex-direction: column; }
       .header-actions { justify-items: flex-start; min-width: 0; width: 100%; }
-      .theme-control { max-width: 100%; }
+      .header-controls { justify-content: flex-start; }
+      .theme-control, .language-control { max-width: 100%; }
       .statusbar { justify-content: flex-start; min-width: 0; }
       main { width: calc(100vw - 28px); grid-template-columns: 1fr; padding: 14px 0; }
       .stage-lane { grid-template-columns: 1fr; gap: 10px; }
@@ -2305,17 +2323,20 @@ def dashboard_html() -> str:
 <body>
   <header>
     <div>
-      <h1>Phaseharness Dashboard</h1>
+      <h1 id="app-title">Phaseharness Dashboard</h1>
       <div class="subtitle" id="subtitle">Loading run state...</div>
     </div>
     <div class="header-actions">
       <div class="statusbar" id="statusbar"></div>
-      <div class="theme-control" id="theme-control" aria-label="Theme"></div>
+      <div class="header-controls">
+        <div class="language-control" id="language-control" aria-label="Language"></div>
+        <div class="theme-control" id="theme-control" aria-label="Theme"></div>
+      </div>
     </div>
   </header>
   <main>
     <section class="wide-section">
-      <div class="section-head"><h2>Run Overview</h2></div>
+      <div class="section-head"><h2 id="run-overview-title">Run Overview</h2></div>
       <div class="section-body">
         <div id="history"></div>
       </div>
@@ -2323,7 +2344,7 @@ def dashboard_html() -> str:
     <div class="stack">
       <section>
         <div class="section-head">
-          <h2>Current Workflow</h2>
+          <h2 id="current-workflow-title">Current Workflow</h2>
           <span class="elapsed-counter" id="elapsed-counter">idle</span>
         </div>
         <div class="section-body">
@@ -2335,16 +2356,16 @@ def dashboard_html() -> str:
         </div>
       </section>
       <section id="run-review-section" hidden>
-        <div class="section-head"><h2>Run Review</h2></div>
+        <div class="section-head"><h2 id="run-review-title">Run Review</h2></div>
         <div class="section-body" id="run-review"></div>
       </section>
       <section>
-        <div class="section-head"><h2>Outputs</h2></div>
+        <div class="section-head"><h2 id="outputs-title">Outputs</h2></div>
         <div class="section-body" id="outputs"></div>
       </section>
     </div>
     <section class="wide-section" id="runs-section">
-      <div class="section-head"><h2>Runs</h2></div>
+      <div class="section-head"><h2 id="runs-title">Runs</h2></div>
       <div class="section-body" id="recent"></div>
     </section>
   </main>
@@ -2366,17 +2387,384 @@ def dashboard_html() -> str:
     const HISTORY_INITIAL_VISIBLE = 10;
     const HISTORY_PAGE_SIZE = 10;
     const HISTORY_FILTER_LABELS = {
-      all: "All runs",
-      running: "Running now",
-      resumable: "Can continue",
-      failed: "Failed"
+      all: "history.all",
+      running: "history.running",
+      resumable: "history.resumable",
+      failed: "history.failed"
     };
     const THEME_STORAGE_KEY = "phaseharness-dashboard-theme";
     const THEME_OPTIONS = [
-      ["auto", "Auto"],
-      ["light", "Light"],
-      ["dark", "Dark"]
+      ["auto", "theme.auto"],
+      ["light", "theme.light"],
+      ["dark", "theme.dark"]
     ];
+    const LANGUAGE_STORAGE_KEY = "phaseharness-dashboard-language";
+    const LANGUAGE_OPTIONS = [
+      ["auto", "language.auto"],
+      ["en", "language.en"],
+      ["ko", "language.ko"]
+    ];
+    const TRANSLATIONS = {
+      en: {
+        "app.title": "Phaseharness Dashboard",
+        "app.loading": "Loading run state...",
+        "section.runOverview": "Run Overview",
+        "section.currentWorkflow": "Current Workflow",
+        "section.runReview": "Run Review",
+        "section.outputs": "Outputs",
+        "section.runs": "Runs",
+        "control.theme": "Theme",
+        "control.language": "Language",
+        "theme.auto": "Auto",
+        "theme.light": "Light",
+        "theme.dark": "Dark",
+        "language.auto": "Auto",
+        "language.en": "EN",
+        "language.ko": "KO",
+        "stage.clarify": "Clarify",
+        "stage.context_gather": "Context Gather",
+        "stage.plan": "Plan",
+        "stage.generate": "Generate",
+        "stage.evaluate": "Evaluate",
+        "status.active": "active",
+        "status.running": "running",
+        "status.pending": "pending",
+        "status.completed": "completed",
+        "status.error": "error",
+        "status.failed": "failed",
+        "status.fail": "fail",
+        "status.pass": "pass",
+        "status.warn": "warn",
+        "status.waiting_user": "waiting",
+        "status.committed": "committed",
+        "status.no_changes": "no changes",
+        "status.skipped": "skipped",
+        "status.inactive": "inactive",
+        "status.unknown": "unknown",
+        "header.activeRun": "active run",
+        "header.selectedRun": "selected run",
+        "header.inactive": "inactive",
+        "header.updated": "updated",
+        "header.stale": "stale",
+        "header.fresh": "fresh",
+        "empty.noActiveRun": "No active run",
+        "empty.noActivePhaseharnessRun": "No active phaseharness run.",
+        "empty.noGeneratePhaseFiles": "No generate phase files found.",
+        "empty.noRunsInGroup": "No runs in this group.",
+        "empty.noRunHistory": "No Phaseharness run history.",
+        "empty.noActiveOutputs": "No active outputs.",
+        "empty.noRecentRuns": "No recent runs.",
+        "empty.noRunsInFilter": "No runs in this filter.",
+        "elapsed.idle": "idle",
+        "elapsed.duration": "duration",
+        "elapsed.running": "running",
+        "elapsed.total": "total",
+        "common.none": "none",
+        "common.unknown": "unknown",
+        "common.done": "done",
+        "copy.resume": "Copy resume request",
+        "copy.copied": "Copied",
+        "copy.failed": "Copy failed",
+        "error.runDetailLoad": "Run detail load failed",
+        "error.dashboardRefresh": "Dashboard refresh failed",
+        "phase.generatePhases": "Generate phases",
+        "file.empty": "file empty",
+        "file.missing": "file missing",
+        "result.whyFailed": "Why it failed",
+        "result.noFailureReason": "No failure reason recorded.",
+        "result.completed": "Completed",
+        "result.runCompleted": "Run completed",
+        "result.evaluation": "Evaluation",
+        "resume.label": "Resume",
+        "meta.mode": "Mode",
+        "meta.branch": "Branch",
+        "metric.stage": "Stage",
+        "metric.phase": "Phase",
+        "metric.loop": "Loop",
+        "metric.evaluation": "Evaluation",
+        "history.all": "All runs",
+        "history.running": "Running now",
+        "history.resumable": "Can continue",
+        "history.failed": "Failed",
+        "history.showing": "Showing in Runs",
+        "history.viewList": "View list",
+        "history.noRuns": "No runs",
+        "history.showMore": "Show 10 more",
+        "history.left": "left",
+        "history.collapse": "Collapse",
+        "overview.statusDistribution": "Status distribution",
+        "overview.total": "total",
+        "overview.error": "Failed",
+        "overview.active": "Running",
+        "overview.waiting": "Waiting",
+        "overview.completed": "Completed",
+        "overview.other": "Other",
+        "output.kind": "Kind",
+        "output.name": "Name",
+        "output.state": "State",
+        "output.path": "Path",
+        "kind.artifact": "artifact",
+        "kind.phase": "phase",
+        "fileState.ok": "ok",
+        "fileState.empty": "empty",
+        "fileState.missing": "missing",
+        "review.checks": "Review Checks",
+        "review.feedback": "Feedback",
+        "review.requirements": "Requirements",
+        "review.requirementsDesc": "Evaluation against the original request.",
+        "review.guidance": "Guidance",
+        "review.guidanceDesc": "Whether harness guidance and constraints were followed.",
+        "review.checksLabel": "Checks",
+        "review.checksDesc": "Validation commands detected in plan/evaluate artifacts.",
+        "review.failed": "Failed",
+        "review.failedDesc": "Validation commands recorded as failed.",
+        "review.evaluateFailures": "Evaluate failures",
+        "review.evaluateFailuresDesc": "Times evaluate produced a fail result.",
+        "review.followups": "Follow-ups",
+        "review.followupsDesc": "Follow-up phases created after evaluation.",
+        "review.loopRetries": "Loop retries",
+        "review.loopRetriesDesc": "Retry loops used by the run.",
+        "review.postCompletion": "Post completion",
+        "review.postCompletionDesc": "Explicit feedback after completion.",
+        "runs.run": "Run",
+        "runs.status": "Status",
+        "runs.stage": "Stage",
+        "runs.phase": "Phase",
+        "runs.updated": "Updated",
+        "runs.resume": "Resume",
+        "filter.all": "All",
+        "filter.running": "Running",
+        "filter.resumable": "Can continue",
+        "filter.failed": "Failed"
+      },
+      ko: {
+        "app.title": "Phaseharness 대시보드",
+        "app.loading": "run 상태를 불러오는 중...",
+        "section.runOverview": "Run 개요",
+        "section.currentWorkflow": "현재 Workflow",
+        "section.runReview": "Run 리뷰",
+        "section.outputs": "결과물",
+        "section.runs": "Runs",
+        "control.theme": "테마",
+        "control.language": "언어",
+        "theme.auto": "자동",
+        "theme.light": "라이트",
+        "theme.dark": "다크",
+        "language.auto": "자동",
+        "language.en": "EN",
+        "language.ko": "KO",
+        "stage.clarify": "Clarify",
+        "stage.context_gather": "Context Gather",
+        "stage.plan": "Plan",
+        "stage.generate": "Generate",
+        "stage.evaluate": "Evaluate",
+        "status.active": "진행 중",
+        "status.running": "진행 중",
+        "status.pending": "대기",
+        "status.completed": "완료",
+        "status.error": "오류",
+        "status.failed": "실패",
+        "status.fail": "실패",
+        "status.pass": "통과",
+        "status.warn": "주의",
+        "status.waiting_user": "대기 중",
+        "status.committed": "커밋됨",
+        "status.no_changes": "변경 없음",
+        "status.skipped": "건너뜀",
+        "status.inactive": "비활성",
+        "status.unknown": "알 수 없음",
+        "header.activeRun": "진행 중",
+        "header.selectedRun": "선택됨",
+        "header.inactive": "비활성",
+        "header.updated": "갱신",
+        "header.stale": "멈춤",
+        "header.fresh": "최신",
+        "empty.noActiveRun": "진행 중인 run 없음",
+        "empty.noActivePhaseharnessRun": "진행 중인 phaseharness run이 없습니다.",
+        "empty.noGeneratePhaseFiles": "generate phase 파일이 없습니다.",
+        "empty.noRunsInGroup": "이 그룹에 run이 없습니다.",
+        "empty.noRunHistory": "Phaseharness run 히스토리가 없습니다.",
+        "empty.noActiveOutputs": "진행 중인 결과물이 없습니다.",
+        "empty.noRecentRuns": "최근 run이 없습니다.",
+        "empty.noRunsInFilter": "이 필터에 해당하는 run이 없습니다.",
+        "elapsed.idle": "대기",
+        "elapsed.duration": "소요 시간",
+        "elapsed.running": "진행 중",
+        "elapsed.total": "전체",
+        "common.none": "없음",
+        "common.unknown": "알 수 없음",
+        "common.done": "완료",
+        "copy.resume": "재개 요청 복사",
+        "copy.copied": "복사됨",
+        "copy.failed": "복사 실패",
+        "error.runDetailLoad": "Run 상세 로드 실패",
+        "error.dashboardRefresh": "대시보드 갱신 실패",
+        "phase.generatePhases": "Generate phases",
+        "file.empty": "파일 비어 있음",
+        "file.missing": "파일 없음",
+        "result.whyFailed": "실패 이유",
+        "result.noFailureReason": "기록된 실패 이유가 없습니다.",
+        "result.completed": "완료",
+        "result.runCompleted": "Run 완료",
+        "result.evaluation": "평가",
+        "resume.label": "재개",
+        "meta.mode": "모드",
+        "meta.branch": "브랜치",
+        "metric.stage": "단계",
+        "metric.phase": "Phase",
+        "metric.loop": "Loop",
+        "metric.evaluation": "평가",
+        "history.all": "전체 run",
+        "history.running": "진행 중",
+        "history.resumable": "재개 가능",
+        "history.failed": "실패",
+        "history.showing": "Runs에 표시 중",
+        "history.viewList": "목록 보기",
+        "history.noRuns": "없음",
+        "history.showMore": "10개 더 보기",
+        "history.left": "개 남음",
+        "history.collapse": "접기",
+        "overview.statusDistribution": "상태 분포",
+        "overview.total": "전체",
+        "overview.error": "실패",
+        "overview.active": "진행 중",
+        "overview.waiting": "대기",
+        "overview.completed": "완료",
+        "overview.other": "기타",
+        "output.kind": "종류",
+        "output.name": "이름",
+        "output.state": "상태",
+        "output.path": "경로",
+        "kind.artifact": "artifact",
+        "kind.phase": "phase",
+        "fileState.ok": "ok",
+        "fileState.empty": "비어 있음",
+        "fileState.missing": "없음",
+        "review.checks": "Review Checks",
+        "review.feedback": "Feedback",
+        "review.requirements": "요구사항",
+        "review.requirementsDesc": "원래 요청 기준 평가 결과입니다.",
+        "review.guidance": "가이드",
+        "review.guidanceDesc": "harness 지침과 제약을 지켰는지 확인합니다.",
+        "review.checksLabel": "검증",
+        "review.checksDesc": "plan/evaluate 산출물에서 찾은 검증 명령 수입니다.",
+        "review.failed": "실패",
+        "review.failedDesc": "실패로 기록된 검증 명령 수입니다.",
+        "review.evaluateFailures": "Evaluate 실패",
+        "review.evaluateFailuresDesc": "evaluate 단계에서 fail로 잡힌 횟수입니다.",
+        "review.followups": "Follow-up",
+        "review.followupsDesc": "평가 후 생성된 follow-up phase 수입니다.",
+        "review.loopRetries": "재시도",
+        "review.loopRetriesDesc": "run에서 사용한 retry loop 횟수입니다.",
+        "review.postCompletion": "완료 후 피드백",
+        "review.postCompletionDesc": "완료 후 명시적으로 남긴 피드백 수입니다.",
+        "runs.run": "Run",
+        "runs.status": "상태",
+        "runs.stage": "단계",
+        "runs.phase": "Phase",
+        "runs.updated": "갱신",
+        "runs.resume": "재개",
+        "filter.all": "전체",
+        "filter.running": "진행 중",
+        "filter.resumable": "재개 가능",
+        "filter.failed": "실패"
+      }
+    };
+    let currentLanguage = "en";
+
+    function normalizeLanguageChoice(choice) {
+      return ["auto", "en", "ko"].includes(choice) ? choice : "auto";
+    }
+    function browserLanguage() {
+      return /^ko\b/i.test(navigator.language || "") ? "ko" : "en";
+    }
+    function storedLanguageChoice() {
+      try {
+        return normalizeLanguageChoice(localStorage.getItem(LANGUAGE_STORAGE_KEY) || "auto");
+      } catch (error) {
+        return "auto";
+      }
+    }
+    function resolveLanguageChoice(choice) {
+      const normalized = normalizeLanguageChoice(choice);
+      return normalized === "auto" ? browserLanguage() : normalized;
+    }
+    function t(key, values = {}, fallback = key) {
+      let output = TRANSLATIONS[currentLanguage]?.[key] || TRANSLATIONS.en[key] || fallback;
+      for (const [name, value] of Object.entries(values)) {
+        output = output.replaceAll(`{${name}}`, String(value));
+      }
+      return output;
+    }
+    function renderLanguageControl() {
+      const target = document.getElementById("language-control");
+      if (!target) return;
+      target.innerHTML = LANGUAGE_OPTIONS.map(([value, labelKey]) => (
+        `<button type="button" class="language-btn" data-language-option="${value}" aria-pressed="false" onclick="applyLanguageChoice('${value}')">${t(labelKey)}</button>`
+      )).join("");
+    }
+    function updateLanguageControl(choice) {
+      const current = normalizeLanguageChoice(choice || storedLanguageChoice());
+      document.querySelectorAll("[data-language-option]").forEach(button => {
+        const selected = button.dataset.languageOption === current;
+        button.classList.toggle("selected", selected);
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
+    }
+    function localizeStaticLabels() {
+      document.title = t("app.title");
+      const labels = {
+        "app-title": "app.title",
+        "subtitle": "app.loading",
+        "run-overview-title": "section.runOverview",
+        "current-workflow-title": "section.currentWorkflow",
+        "run-review-title": "section.runReview",
+        "outputs-title": "section.outputs",
+        "runs-title": "section.runs"
+      };
+      for (const [id, key] of Object.entries(labels)) {
+        const element = document.getElementById(id);
+        if (element && (id !== "subtitle" || !latestPayload)) element.textContent = t(key);
+      }
+      document.getElementById("theme-control")?.setAttribute("aria-label", t("control.theme"));
+      document.getElementById("language-control")?.setAttribute("aria-label", t("control.language"));
+    }
+    function applyLanguageChoice(choice) {
+      const normalized = normalizeLanguageChoice(choice);
+      currentLanguage = resolveLanguageChoice(normalized);
+      try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
+      } catch (error) {}
+      document.documentElement.dataset.languageChoice = normalized;
+      document.documentElement.lang = currentLanguage;
+      localizeStaticLabels();
+      renderLanguageControl();
+      updateLanguageControl(normalized);
+      renderThemeControl();
+      updateThemeControl(storedThemeChoice());
+      if (latestPayload) renderDashboard(latestPayload);
+    }
+    function initLanguageControl() {
+      renderLanguageControl();
+      applyLanguageChoice(storedLanguageChoice());
+    }
+    function stageLabel(stage) {
+      return t(`stage.${stage}`, {}, text(stage, ""));
+    }
+    function displayStatus(status, fallback = "common.none") {
+      const value = text(status, "").toLowerCase();
+      return value ? t(`status.${value}`, {}, value) : t(fallback);
+    }
+    function displayFileState(state) {
+      const value = state || "missing";
+      return t(`fileState.${value}`, {}, value);
+    }
+    function displayKind(kind) {
+      return t(`kind.${kind}`, {}, kind);
+    }
+    function hiddenCountLabel(count) {
+      return currentLanguage === "ko" ? `${count}${t("history.left")}` : `${count} ${t("history.left")}`;
+    }
 
     function normalizeThemeChoice(choice) {
       return ["auto", "light", "dark"].includes(choice) ? choice : "auto";
@@ -2391,8 +2779,8 @@ def dashboard_html() -> str:
     function renderThemeControl() {
       const target = document.getElementById("theme-control");
       if (!target) return;
-      target.innerHTML = THEME_OPTIONS.map(([value, label]) => (
-        `<button type="button" class="theme-btn" data-theme-option="${value}" aria-pressed="false" onclick="applyThemeChoice('${value}')">${label}</button>`
+      target.innerHTML = THEME_OPTIONS.map(([value, labelKey]) => (
+        `<button type="button" class="theme-btn" data-theme-option="${value}" aria-pressed="false" onclick="applyThemeChoice('${value}')">${t(labelKey)}</button>`
       )).join("");
     }
     function updateThemeControl(choice) {
@@ -2440,7 +2828,7 @@ def dashboard_html() -> str:
       return `<span class="meta-chip"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></span>`;
     }
     function badge(status) {
-      return `<span class="badge ${cls(status)}">${escapeHtml(text(status, "pending"))}</span>`;
+      return `<span class="badge ${cls(status)}">${escapeHtml(displayStatus(status, "status.pending"))}</span>`;
     }
     function fileState(info) {
       if (!info) return "missing";
@@ -2454,7 +2842,7 @@ def dashboard_html() -> str:
     function formatLocalDateTime(value) {
       const raw = text(value, "");
       const date = new Date(raw);
-      if (Number.isNaN(date.getTime())) return raw || "unknown";
+      if (Number.isNaN(date.getTime())) return raw || t("common.unknown");
       return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
     }
     function secondsSince(value) {
@@ -2503,7 +2891,7 @@ def dashboard_html() -> str:
       if (status === "running") {
         const elapsed = secondsSince(stageStartedAt(stage) || summary.created_at);
         return {
-          label: elapsed === null ? "running" : formatStageDuration(elapsed),
+          label: elapsed === null ? t("elapsed.running") : formatStageDuration(elapsed),
           live: elapsed !== null,
           tone: "running"
         };
@@ -2529,29 +2917,29 @@ def dashboard_html() -> str:
       if (!target) return;
       const current = currentData(payload || {});
       if (!current) {
-        target.textContent = "idle";
+        target.textContent = t("elapsed.idle");
         return;
       }
       const summary = current.views.summary || {};
       const progress = current.views.progress || {};
       const stages = stageMap(progress);
       const stage = stages[summary.current_stage] || {};
-      const stageLabel = STAGE_LABELS[summary.current_stage] || text(summary.current_stage, "running");
+      const stageName = stageLabel(summary.current_stage) || text(summary.current_stage, t("elapsed.running"));
       const phase = summary.current_phase ? ` · ${summary.current_phase}` : "";
       if (terminalStatus(summary.status)) {
-        setElapsed("duration", formatDuration(summary.duration_seconds || 0), "done");
+        setElapsed(t("elapsed.duration"), formatDuration(summary.duration_seconds || 0), "done");
         document.querySelectorAll("[data-elapsed-live]").forEach(item => {
-          item.textContent = `${formatDuration(summary.duration_seconds || 0)} total`;
+          item.textContent = `${formatDuration(summary.duration_seconds || 0)} ${t("elapsed.total")}`;
         });
         return;
       }
       const elapsed = secondsSince(stageStartedAt(stage) || summary.created_at);
-      setElapsed(`${stageLabel}${phase}`, elapsed === null ? "running" : formatDuration(elapsed));
+      setElapsed(`${stageName}${phase}`, elapsed === null ? t("elapsed.running") : formatDuration(elapsed));
       document.querySelectorAll("[data-stage-live]").forEach(item => {
-        item.textContent = elapsed === null ? "running" : formatStageDuration(elapsed);
+        item.textContent = elapsed === null ? t("elapsed.running") : formatStageDuration(elapsed);
       });
       document.querySelectorAll("[data-elapsed-live]").forEach(item => {
-        item.textContent = elapsed === null ? "running" : formatDuration(elapsed);
+        item.textContent = elapsed === null ? t("elapsed.running") : formatDuration(elapsed);
       });
     }
     function canResumeRun(run) {
@@ -2568,7 +2956,7 @@ def dashboard_html() -> str:
       </svg>`;
     }
     function copyButton(value) {
-      return `<button type="button" class="copy-btn" title="Copy resume request" aria-label="Copy resume request" data-copy="${escapeHtml(value)}" onclick="copyResume(event, this)">${copyIcon()}</button>`;
+      return `<button type="button" class="copy-btn" title="${escapeHtml(t("copy.resume"))}" aria-label="${escapeHtml(t("copy.resume"))}" data-copy="${escapeHtml(value)}" onclick="copyResume(event, this)">${copyIcon()}</button>`;
     }
     async function copyResume(event, button) {
       event.stopPropagation();
@@ -2576,13 +2964,13 @@ def dashboard_html() -> str:
       try {
         await navigator.clipboard.writeText(value);
         button.classList.add("copied");
-        button.title = "Copied";
+        button.title = t("copy.copied");
         setTimeout(() => {
           button.classList.remove("copied");
-          button.title = "Copy resume request";
+          button.title = t("copy.resume");
         }, 1200);
       } catch (error) {
-        button.title = "Copy failed";
+        button.title = t("copy.failed");
       }
     }
     function currentData(payload) {
@@ -2601,7 +2989,7 @@ def dashboard_html() -> str:
           if (!response.ok) throw new Error(`run detail request failed: ${response.status}`);
           latestPayload.run_details[runId] = await response.json();
         } catch (error) {
-          document.getElementById("subtitle").textContent = `Run detail load failed: ${error}`;
+          document.getElementById("subtitle").textContent = `${t("error.runDetailLoad")}: ${error}`;
           return;
         }
       }
@@ -2620,12 +3008,12 @@ def dashboard_html() -> str:
       const activeSelected = summary?.run_id && summary.run_id === payload.active_run;
       document.getElementById("subtitle").textContent = current
         ? `${summary.request || ""} · ${summary.run_id || ""}`
-        : `No active run · ${payload.root}`;
+        : `${t("empty.noActiveRun")} · ${payload.root}`;
       const stale = resume?.stale?.is_stale;
       document.getElementById("statusbar").innerHTML = [
-        chip(current ? (activeSelected ? "active run" : "selected run") : "inactive", current ? summary.status : "pending"),
-        chip(`updated ${formatLocalDateTime(payload.generated_at)}`, "pending"),
-        chip(stale ? "stale" : "fresh", stale ? "warn" : "completed")
+        chip(current ? (activeSelected ? t("header.activeRun") : t("header.selectedRun")) : t("header.inactive"), current ? summary.status : "pending"),
+        chip(`${t("header.updated")} ${formatLocalDateTime(payload.generated_at)}`, "pending"),
+        chip(stale ? t("header.stale") : t("header.fresh"), stale ? "warn" : "completed")
       ].join("");
     }
     function node(stage, status, meta, active, options = {}) {
@@ -2654,7 +3042,7 @@ def dashboard_html() -> str:
         const state = stages[stage] || { status: "pending", attempts: 0 };
         const isActive = summary.current_stage === stage;
         const isFlowing = isActive && i < STAGES.length - 1;
-        stageNodes += node(STAGE_LABELS[stage], state.status, "", isActive, {
+        stageNodes += node(stageLabel(stage), state.status, "", isActive, {
           flowing: isFlowing,
           last: i === STAGES.length - 1,
           duration: stageDuration(state, summary, isActive)
@@ -2664,7 +3052,7 @@ def dashboard_html() -> str:
       const phaseCards = phases.length
         ? phases.map(phase => {
           const state = fileState(phase.file);
-          const fileNote = state === "ok" ? "" : ` · file ${state}`;
+          const fileNote = state === "ok" ? "" : ` · ${displayFileState(state)}`;
           return `<div class="phase-card ${phase.current ? "active" : ""}">
             <div class="phase-name">${escapeHtml(phase.title || phase.phase_id)}</div>
             <div class="phase-meta">${escapeHtml(phase.phase_id)}${escapeHtml(fileNote)}</div>
@@ -2672,11 +3060,11 @@ def dashboard_html() -> str:
             ${badge(phase.status)}
           </div>`;
         }).join("")
-        : `<div class="empty">No generate phase files found.</div>`;
+        : `<div class="empty">${escapeHtml(t("empty.noGeneratePhaseFiles"))}</div>`;
       document.getElementById("flow").innerHTML = `
         <div class="stage-lane">${stageNodes}</div>
         <div class="phase-lane">
-          <div class="phase-title">Generate phases</div>
+          <div class="phase-title">${escapeHtml(t("phase.generatePhases"))}</div>
           <div class="phase-grid">${phaseCards}</div>
         </div>`;
     }
@@ -2685,12 +3073,12 @@ def dashboard_html() -> str:
       const summary = current?.views?.summary || {};
       const resume = current?.views?.resume || {};
       const metrics = [
-        ["Stage", summary.current_stage],
-        ["Phase", summary.current_phase],
-        ["Loop", summary.loop ? `${summary.loop.current || 1}/${summary.loop.max || 1}` : "none"],
-        ["Evaluation", summary.evaluation_status]
+        [t("metric.stage"), summary.current_stage ? stageLabel(summary.current_stage) : t("common.none")],
+        [t("metric.phase"), summary.current_phase || t("common.none")],
+        [t("metric.loop"), summary.loop ? `${summary.loop.current || 1}/${summary.loop.max || 1}` : t("common.none")],
+        [t("metric.evaluation"), summary.evaluation_status ? displayStatus(summary.evaluation_status, "common.none") : t("common.none")]
       ];
-      document.getElementById("metrics").innerHTML = metrics.map(([label, value]) => `<div class="metric"><div class="metric-label">${label}</div><div class="metric-value">${escapeHtml(text(value))}</div></div>`).join("");
+      document.getElementById("metrics").innerHTML = metrics.map(([label, value]) => `<div class="metric"><div class="metric-label">${escapeHtml(label)}</div><div class="metric-value">${escapeHtml(text(value, t("common.none")))}</div></div>`).join("");
     }
     function findHistoryItem(payload, runId, preferredGroup = null) {
       const groups = payload.history?.groups || {};
@@ -2732,17 +3120,17 @@ def dashboard_html() -> str:
         const item = findHistoryItem(payload, summary.run_id, "failed");
         const diagnostics = current.views?.diagnostics || {};
         const findings = diagnostics.failure_analysis?.findings || [];
-        const reason = item?.reason || item?.detail || findings[0] || "No failure reason recorded.";
+        const reason = item?.reason || item?.detail || findings[0] || t("result.noFailureReason");
         const evidence = failureEvidence(diagnostics).filter(item => item !== reason);
         return `<div class="run-result error">
-          <div class="run-result-title"><strong>Why it failed</strong><span>${escapeHtml(summary.current_stage || "run")}</span></div>
+          <div class="run-result-title"><strong>${escapeHtml(t("result.whyFailed"))}</strong><span>${escapeHtml(stageLabel(summary.current_stage) || "run")}</span></div>
           <div class="run-result-reason">${escapeHtml(reason)}</div>
           ${evidence.length ? `<ul class="run-result-list">${evidence.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
         </div>`;
       }
       if (status === "completed") {
-        const evaluation = summary.evaluation_status ? `Evaluation ${summary.evaluation_status}` : "Run completed";
-        return `<div class="run-result completed"><div class="run-result-title"><strong>Completed</strong><span>${escapeHtml(evaluation)}</span></div></div>`;
+        const evaluation = summary.evaluation_status ? `${t("result.evaluation")} ${displayStatus(summary.evaluation_status)}` : t("result.runCompleted");
+        return `<div class="run-result completed"><div class="run-result-title"><strong>${escapeHtml(t("result.completed"))}</strong><span>${escapeHtml(evaluation)}</span></div></div>`;
       }
       return "";
     }
@@ -2751,14 +3139,14 @@ def dashboard_html() -> str:
       if (!target) return;
       const current = currentData(payload);
       if (!current) {
-        target.innerHTML = `<div class="empty">No active phaseharness run.</div>`;
+        target.innerHTML = `<div class="empty">${escapeHtml(t("empty.noActivePhaseharnessRun"))}</div>`;
         return;
       }
       const summary = current.views.summary;
       const resume = current.views.resume;
       const request = resumeRequest(summary.run_id);
       const hint = canResumeRun(summary)
-        ? `<div class="resume-hint workflow-resume"><span>Resume</span><code>${escapeHtml(request)}</code>${copyButton(request)}</div>`
+        ? `<div class="resume-hint workflow-resume"><span>${escapeHtml(t("resume.label"))}</span><code>${escapeHtml(request)}</code>${copyButton(request)}</div>`
         : "";
       target.innerHTML = `
         <div class="workflow-context-top">
@@ -2767,8 +3155,8 @@ def dashboard_html() -> str:
               <span class="workflow-run-id">${escapeHtml(summary.run_id)}</span>
             </div>
             <div class="workflow-run-line">
-              ${metaChip("Mode", summary.mode || "unknown")}
-              ${metaChip("Branch", summary.worktree?.branch || "unknown")}
+              ${metaChip(t("meta.mode"), summary.mode || t("common.unknown"))}
+              ${metaChip(t("meta.branch"), summary.worktree?.branch || t("common.unknown"))}
             </div>
           </div>
         </div>
@@ -2779,7 +3167,7 @@ def dashboard_html() -> str:
       const count = Number(value || 0);
       const selected = historyFilter === key ? " selected" : "";
       const danger = options.danger ? " danger" : "";
-      const action = count ? (selected ? "Showing in Runs" : "View list") : "No runs";
+      const action = count ? (selected ? t("history.showing") : t("history.viewList")) : t("history.noRuns");
       return `<button type="button" class="history-stat clickable${selected}${danger}" onclick="selectHistoryFilter('${escapeHtml(key)}', true)" ${count ? "" : "disabled"}>
         <div class="history-label">${escapeHtml(label)}</div>
         <div class="history-value">${escapeHtml(count)}</div>
@@ -2807,14 +3195,14 @@ def dashboard_html() -> str:
     function renderHistoryDetailItem(item, tone = "") {
       const runId = text(item.run_id, "");
       const selected = selectedRunId === runId ? " selected" : "";
-      const detail = text(item.reason || item.detail, "No detail recorded.");
+      const detail = text(item.reason || item.detail, t("result.noFailureReason"));
       return `<button type="button" class="history-detail-item${tone}${selected}" onclick="selectRun('${escapeHtml(runId)}')">
         <div class="history-detail-main">
           <code>${escapeHtml(runId)}</code>
           <span>${escapeHtml(detail)}</span>
         </div>
         <div class="history-detail-meta">
-          <span class="history-detail-status">${escapeHtml(text(item.status, "unknown"))}</span>
+          <span class="history-detail-status">${escapeHtml(displayStatus(item.status, "common.unknown"))}</span>
           <time>${escapeHtml(formatLocalDateTime(item.updated_at))}</time>
         </div>
       </button>`;
@@ -2823,7 +3211,7 @@ def dashboard_html() -> str:
       if (!historyFilter) return "";
       const groups = history.groups || {};
       const items = groups[historyFilter] || [];
-      const label = HISTORY_FILTER_LABELS[historyFilter] || historyFilter;
+      const label = t(HISTORY_FILTER_LABELS[historyFilter] || historyFilter);
       const totals = {
         all: history.total || 0,
         running: history.status?.active || 0,
@@ -2840,10 +3228,10 @@ def dashboard_html() -> str:
         <div class="history-detail-head"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(suffix)}</span></div>
         ${items.length
           ? `<div class="history-detail-list">${visibleItems.map(item => renderHistoryDetailItem(item, tone)).join("")}</div>`
-          : `<div class="empty">No runs in this group.</div>`}
+          : `<div class="empty">${escapeHtml(t("empty.noRunsInGroup"))}</div>`}
         ${items.length ? `<div class="history-detail-actions">
-          ${visibleCount < items.length ? `<button type="button" class="history-more-btn" onclick="showMoreHistory('${escapeHtml(historyFilter)}')">Show 10 more${hiddenCount ? ` (${hiddenCount} left)` : ""}</button>` : ""}
-          ${visibleCount > HISTORY_INITIAL_VISIBLE ? `<button type="button" class="history-more-btn" onclick="collapseHistory('${escapeHtml(historyFilter)}')">Collapse</button>` : ""}
+          ${visibleCount < items.length ? `<button type="button" class="history-more-btn" onclick="showMoreHistory('${escapeHtml(historyFilter)}')">${escapeHtml(t("history.showMore"))}${hiddenCount ? ` (${escapeHtml(hiddenCountLabel(hiddenCount))})` : ""}</button>` : ""}
+          ${visibleCount > HISTORY_INITIAL_VISIBLE ? `<button type="button" class="history-more-btn" onclick="collapseHistory('${escapeHtml(historyFilter)}')">${escapeHtml(t("history.collapse"))}</button>` : ""}
         </div>` : ""}
       </div>`;
     }
@@ -2851,11 +3239,11 @@ def dashboard_html() -> str:
       const status = history.status || {};
       const total = Math.max(0, Number(history.total || 0));
       const rows = [
-        ["error", "Failed", Number(status.error || 0)],
-        ["active", "Running", Number(status.active || 0)],
-        ["waiting", "Waiting", Number(status.waiting_user || 0)],
-        ["completed", "Completed", Number(status.completed || 0)],
-        ["other", "Other", Number(status.other || 0)]
+        ["error", t("overview.error"), Number(status.error || 0)],
+        ["active", t("overview.active"), Number(status.active || 0)],
+        ["waiting", t("overview.waiting"), Number(status.waiting_user || 0)],
+        ["completed", t("overview.completed"), Number(status.completed || 0)],
+        ["other", t("overview.other"), Number(status.other || 0)]
       ];
       const distribution = rows.map(([key, label, count]) => {
         const percent = total ? Math.round((count / total) * 100) : 0;
@@ -2867,15 +3255,15 @@ def dashboard_html() -> str:
         </div>`;
       }).join("");
       return `<div class="overview-chart">
-        <div class="overview-chart-head"><strong>Status distribution</strong><span>${escapeHtml(total)} total</span></div>
-        <div class="overview-distribution" aria-label="Run status distribution">${distribution}</div>
+        <div class="overview-chart-head"><strong>${escapeHtml(t("overview.statusDistribution"))}</strong><span>${escapeHtml(total)} ${escapeHtml(t("overview.total"))}</span></div>
+        <div class="overview-distribution" aria-label="${escapeHtml(t("overview.statusDistribution"))}">${distribution}</div>
       </div>`;
     }
     function renderHistory(payload) {
       const history = payload.history || {};
       const status = history.status || {};
       if (!history.total) {
-        document.getElementById("history").innerHTML = `<div class="empty">No Phaseharness run history.</div>`;
+        document.getElementById("history").innerHTML = `<div class="empty">${escapeHtml(t("empty.noRunHistory"))}</div>`;
         return;
       }
       const activeTotal = status.active || 0;
@@ -2883,23 +3271,23 @@ def dashboard_html() -> str:
         <div class="overview-layout">
           ${renderHistoryChart(history)}
           <div class="history-grid">
-            ${historyCard("all", "All runs", history.total)}
-            ${historyCard("running", "Running now", activeTotal)}
-            ${historyCard("resumable", "Can continue", history.resumable || 0)}
-            ${historyCard("failed", "Failed", status.error || 0, { danger: true })}
+            ${historyCard("all", t("history.all"), history.total)}
+            ${historyCard("running", t("history.running"), activeTotal)}
+            ${historyCard("resumable", t("history.resumable"), history.resumable || 0)}
+            ${historyCard("failed", t("history.failed"), status.error || 0, { danger: true })}
           </div>
         </div>`;
     }
     function renderOutputs(payload) {
       const current = currentData(payload);
       if (!current) {
-        document.getElementById("outputs").innerHTML = `<div class="empty">No active outputs.</div>`;
+        document.getElementById("outputs").innerHTML = `<div class="empty">${escapeHtml(t("empty.noActiveOutputs"))}</div>`;
         return;
       }
       const rows = [];
-      for (const item of current.outputs.artifacts || []) rows.push(["artifact", item.stage, fileState(item), item.path]);
+      for (const item of current.outputs.artifacts || []) rows.push(["artifact", stageLabel(item.stage) || item.stage, fileState(item), item.path]);
       for (const item of current.outputs.phases || []) rows.push(["phase", item.phase_id, fileState(item), item.path]);
-      document.getElementById("outputs").innerHTML = `<table><thead><tr><th>Kind</th><th>Name</th><th>State</th><th>Path</th></tr></thead><tbody>${rows.map(row => `<tr><td>${escapeHtml(row[0])}</td><td>${escapeHtml(row[1])}</td><td>${escapeHtml(row[2])}</td><td><code>${escapeHtml(row[3])}</code></td></tr>`).join("")}</tbody></table>`;
+      document.getElementById("outputs").innerHTML = `<table><thead><tr><th>${escapeHtml(t("output.kind"))}</th><th>${escapeHtml(t("output.name"))}</th><th>${escapeHtml(t("output.state"))}</th><th>${escapeHtml(t("output.path"))}</th></tr></thead><tbody>${rows.map(row => `<tr><td>${escapeHtml(displayKind(row[0]))}</td><td>${escapeHtml(row[1])}</td><td>${escapeHtml(displayFileState(row[2]))}</td><td><code>${escapeHtml(row[3])}</code></td></tr>`).join("")}</tbody></table>`;
     }
     function reviewValueClass(value) {
       const status = text(value, "").toLowerCase();
@@ -2907,10 +3295,10 @@ def dashboard_html() -> str:
       if (["pass", "warn", "completed"].includes(status)) return status;
       return "";
     }
-    function reviewRow(label, value, description) {
+    function reviewRow(label, value, description, toneValue = value) {
       return `<div class="review-row">
         <div class="review-label"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(description)}</span></div>
-        <div class="review-value ${escapeHtml(reviewValueClass(value))}">${escapeHtml(text(value, "none"))}</div>
+        <div class="review-value ${escapeHtml(reviewValueClass(toneValue))}">${escapeHtml(text(value, t("common.none")))}</div>
       </div>`;
     }
     function renderRunReview(payload) {
@@ -2934,20 +3322,20 @@ def dashboard_html() -> str:
         return;
       }
       const reviewChecks = [
-        reviewRow("Requirements", diagnostics.intent_alignment?.status, "Evaluation against the original request."),
-        reviewRow("Guidance", diagnostics.guidance_compliance?.status, "Whether harness guidance and constraints were followed."),
-        reviewRow("Checks", (validation.commands_found || []).length, "Validation commands detected in plan/evaluate artifacts."),
-        reviewRow("Failed", (validation.failed_commands || []).length, "Validation commands recorded as failed.")
+        reviewRow(t("review.requirements"), diagnostics.intent_alignment?.status ? displayStatus(diagnostics.intent_alignment?.status) : t("common.none"), t("review.requirementsDesc"), diagnostics.intent_alignment?.status),
+        reviewRow(t("review.guidance"), diagnostics.guidance_compliance?.status ? displayStatus(diagnostics.guidance_compliance?.status) : t("common.none"), t("review.guidanceDesc"), diagnostics.guidance_compliance?.status),
+        reviewRow(t("review.checksLabel"), (validation.commands_found || []).length, t("review.checksDesc")),
+        reviewRow(t("review.failed"), (validation.failed_commands || []).length, t("review.failedDesc"))
       ].join("");
       const feedbackRows = [
-        reviewRow("Evaluate failures", feedback.evaluate_failures || 0, "Times evaluate produced a fail result."),
-        reviewRow("Follow-ups", feedback.followup_phases || 0, "Follow-up phases created after evaluation."),
-        reviewRow("Loop retries", feedback.loop_retries || 0, "Retry loops used by the run."),
-        reviewRow("Post completion", feedback.explicit_post_completion_feedback || 0, "Explicit feedback after completion.")
+        reviewRow(t("review.evaluateFailures"), feedback.evaluate_failures || 0, t("review.evaluateFailuresDesc")),
+        reviewRow(t("review.followups"), feedback.followup_phases || 0, t("review.followupsDesc")),
+        reviewRow(t("review.loopRetries"), feedback.loop_retries || 0, t("review.loopRetriesDesc")),
+        reviewRow(t("review.postCompletion"), feedback.explicit_post_completion_feedback || 0, t("review.postCompletionDesc"))
       ].join("");
       target.innerHTML = `<div class="review-grid">
-        <div class="review-card"><h3>Review Checks</h3><div class="review-list">${reviewChecks}</div></div>
-        <div class="review-card"><h3>Feedback</h3><div class="review-list">${feedbackRows}</div></div>
+        <div class="review-card"><h3>${escapeHtml(t("review.checks"))}</h3><div class="review-list">${reviewChecks}</div></div>
+        <div class="review-card"><h3>${escapeHtml(t("review.feedback"))}</h3><div class="review-list">${feedbackRows}</div></div>
       </div>`;
     }
     function historyFilterButton(key, label, count, options = {}) {
@@ -2964,7 +3352,7 @@ def dashboard_html() -> str:
       const selected = selectedSummary(payload);
       const selectedId = selected?.run_id || payload.active_run;
       if (!history.total) {
-        document.getElementById("recent").innerHTML = `<div class="empty">No recent runs.</div>`;
+        document.getElementById("recent").innerHTML = `<div class="empty">${escapeHtml(t("empty.noRecentRuns"))}</div>`;
         return;
       }
       const totals = {
@@ -2977,28 +3365,28 @@ def dashboard_html() -> str:
       const visibleRuns = runs.slice(0, visibleCount);
       const hiddenCount = Math.max(0, runs.length - visibleCount);
       const controls = `<div class="recent-filter-row">
-        ${historyFilterButton("all", "All", totals.all)}
-        ${historyFilterButton("running", "Running", totals.running)}
-        ${historyFilterButton("resumable", "Can continue", totals.resumable)}
-        ${historyFilterButton("failed", "Failed", totals.failed, { danger: true })}
+        ${historyFilterButton("all", t("filter.all"), totals.all)}
+        ${historyFilterButton("running", t("filter.running"), totals.running)}
+        ${historyFilterButton("resumable", t("filter.resumable"), totals.resumable)}
+        ${historyFilterButton("failed", t("filter.failed"), totals.failed, { danger: true })}
       </div>`;
       const table = visibleRuns.length
-        ? `<table><thead><tr><th>Run</th><th>Status</th><th>Stage</th><th>Phase</th><th>Updated</th><th>Resume</th></tr></thead><tbody>${visibleRuns.map(run => {
+        ? `<table><thead><tr><th>${escapeHtml(t("runs.run"))}</th><th>${escapeHtml(t("runs.status"))}</th><th>${escapeHtml(t("runs.stage"))}</th><th>${escapeHtml(t("runs.phase"))}</th><th>${escapeHtml(t("runs.updated"))}</th><th>${escapeHtml(t("runs.resume"))}</th></tr></thead><tbody>${visibleRuns.map(run => {
         const resume = resumeRequest(run.run_id);
         const action = canResumeRun(run)
           ? `<div class="resume-action"><code>${escapeHtml(resume)}</code>${copyButton(resume)}</div>`
-          : "done";
+          : t("common.done");
         const classes = ["run-row"];
         if (run.run_id === selectedId) classes.push("selected");
         const stage = run.current_stage || run.stage;
         const phase = run.current_phase || run.phase;
         const detail = run.reason || run.detail;
-        return `<tr class="${classes.join(" ")}" onclick="selectRun('${escapeHtml(run.run_id)}')"><td><code>${escapeHtml(run.run_id)}</code>${detail ? `<div class="run-detail">${escapeHtml(detail)}</div>` : ""}</td><td>${escapeHtml(run.status)}</td><td>${escapeHtml(stage)}</td><td>${escapeHtml(phase || "none")}</td><td>${escapeHtml(formatLocalDateTime(run.updated_at || run.created_at))}</td><td>${action}</td></tr>`;
+        return `<tr class="${classes.join(" ")}" onclick="selectRun('${escapeHtml(run.run_id)}')"><td><code>${escapeHtml(run.run_id)}</code>${detail ? `<div class="run-detail">${escapeHtml(detail)}</div>` : ""}</td><td>${escapeHtml(displayStatus(run.status, "common.unknown"))}</td><td>${escapeHtml(stageLabel(stage) || stage || t("common.none"))}</td><td>${escapeHtml(phase || t("common.none"))}</td><td>${escapeHtml(formatLocalDateTime(run.updated_at || run.created_at))}</td><td>${action}</td></tr>`;
       }).join("")}</tbody></table>`
-        : `<div class="empty">No runs in this filter.</div>`;
+        : `<div class="empty">${escapeHtml(t("empty.noRunsInFilter"))}</div>`;
       const actions = runs.length ? `<div class="history-detail-actions">
-        ${visibleCount < runs.length ? `<button type="button" class="history-more-btn" onclick="showMoreHistory('${escapeHtml(filter)}')">Show 10 more${hiddenCount ? ` (${hiddenCount} left)` : ""}</button>` : ""}
-        ${visibleCount > HISTORY_INITIAL_VISIBLE ? `<button type="button" class="history-more-btn" onclick="collapseHistory('${escapeHtml(filter)}')">Collapse</button>` : ""}
+        ${visibleCount < runs.length ? `<button type="button" class="history-more-btn" onclick="showMoreHistory('${escapeHtml(filter)}')">${escapeHtml(t("history.showMore"))}${hiddenCount ? ` (${escapeHtml(hiddenCountLabel(hiddenCount))})` : ""}</button>` : ""}
+        ${visibleCount > HISTORY_INITIAL_VISIBLE ? `<button type="button" class="history-more-btn" onclick="collapseHistory('${escapeHtml(filter)}')">${escapeHtml(t("history.collapse"))}</button>` : ""}
       </div>` : "";
       document.getElementById("recent").innerHTML = `${controls}${table}${actions}`;
     }
@@ -3026,9 +3414,10 @@ def dashboard_html() -> str:
         latestPayload = payload;
         renderDashboard(payload);
       } catch (error) {
-        document.getElementById("subtitle").textContent = `Dashboard refresh failed: ${error}`;
+        document.getElementById("subtitle").textContent = `${t("error.dashboardRefresh")}: ${error}`;
       }
     }
+    initLanguageControl();
     initThemeControl();
     loadDashboard();
     pollTimer = setInterval(loadDashboard, 2000);
