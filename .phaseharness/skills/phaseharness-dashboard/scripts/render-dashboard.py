@@ -1161,11 +1161,14 @@ def dashboard_html() -> str:
       margin: 0 auto;
       padding: 20px 0 32px;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
+      grid-template-columns: minmax(0, 1fr);
       gap: 18px;
       align-items: start;
     }
-    main > .stack, main > aside { min-width: 0; }
+    main > .stack { min-width: 0; }
+    .wide-section {
+      grid-column: 1 / -1;
+    }
     section {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -1186,10 +1189,32 @@ def dashboard_html() -> str:
       letter-spacing: 0;
     }
     .elapsed-counter {
-      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 5px;
       font-size: 12px;
       line-height: 1.4;
+      min-width: 0;
+    }
+    .elapsed-label {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+    .elapsed-label::after {
+      content: "·";
+      margin-left: 5px;
+      color: #98a2b3;
+    }
+    .elapsed-time {
+      color: var(--slate);
+      font-weight: 600;
+      padding: 0;
       white-space: nowrap;
+    }
+    .elapsed-time.done {
+      color: var(--slate);
     }
     .section-body { padding: 16px; }
     .flow-board {
@@ -1203,29 +1228,221 @@ def dashboard_html() -> str:
       gap: 18px;
       min-width: 0;
     }
-    .stage-lane {
+    .workflow-context {
+      border: 1px solid #e6e9ef;
+      border-radius: 8px;
+      background: #fbfcfe;
+      padding: 10px 12px;
+      margin-bottom: 12px;
       display: grid;
-      grid-template-columns: repeat(5, minmax(120px, 1fr));
-      gap: 58px;
-      align-items: stretch;
+      gap: 8px;
+    }
+    .workflow-context-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+    .workflow-run {
+      min-width: 0;
+      display: grid;
+      gap: 7px;
+    }
+    .workflow-title-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .workflow-run-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 15px;
+      line-height: 1.25;
+      font-weight: 700;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+    .workflow-run-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+    }
+    .meta-chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      background: #fff;
+      color: var(--slate);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      max-width: 100%;
+    }
+    .meta-chip span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .meta-chip strong {
+      font-size: 12px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .workflow-resume {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) 28px;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 9px;
+    }
+    .workflow-resume span {
+      font-weight: 600;
+    }
+    .run-result {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      font-size: 12px;
+      line-height: 1.45;
+      background: #fff;
+    }
+    .run-result-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .run-result-title strong {
+      font-size: 12px;
+    }
+    .run-result-title span {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .run-result-reason {
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+    .run-result-list {
+      margin: 0;
+      padding-left: 16px;
+      display: grid;
+      gap: 3px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+    .run-result-list li {
+      padding-left: 2px;
+    }
+    .run-result.error {
+      border-color: #f1bbb6;
+      background: #fff8f7;
+    }
+    .run-result.error .run-result-title strong {
+      color: var(--red);
+    }
+    .run-result.completed {
+      border-color: #b7dfcf;
+      background: #f5fcf8;
+    }
+    .run-result.completed .run-result-title strong {
+      color: var(--green);
+    }
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .review-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+    .review-card h3 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    .review-list {
+      display: grid;
+      gap: 9px;
+    }
+    .review-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+    }
+    .review-label {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .review-label strong {
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    .review-label span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .review-value {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--slate);
+      white-space: nowrap;
+    }
+    .review-value.fail,
+    .review-value.error {
+      color: var(--red);
+    }
+    .review-value.pass,
+    .review-value.warn {
+      color: var(--green);
+    }
+    .stage-lane {
+      --stage-gap: clamp(32px, 3vw, 58px);
+      display: grid;
+      grid-template-columns: repeat(5, minmax(104px, 1fr));
+      gap: var(--stage-gap);
+      align-items: center;
       position: relative;
     }
     .node {
       position: relative;
       min-width: 0;
-      min-height: 88px;
+      height: 90px;
       border: 1px solid var(--line-strong);
       border-radius: 8px;
       background: #fff;
-      padding: 12px;
+      padding: 10px;
       z-index: 1;
+      padding-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
     }
     .node::after {
       content: "";
       position: absolute;
       top: 50%;
-      right: -45px;
-      width: 34px;
+      right: calc(-1 * (var(--stage-gap) - 13px));
+      width: calc(var(--stage-gap) - 24px);
       height: 2px;
       background: #c3cad5;
       transform: translateY(-50%);
@@ -1235,7 +1452,7 @@ def dashboard_html() -> str:
       content: "";
       position: absolute;
       top: calc(50% - 5px);
-      right: -52px;
+      right: calc(-1 * (var(--stage-gap) - 6px));
       border-left: 8px solid #c3cad5;
       border-top: 5px solid transparent;
       border-bottom: 5px solid transparent;
@@ -1273,17 +1490,43 @@ def dashboard_html() -> str:
       0%, 100% { opacity: 0.55; }
       50% { opacity: 1; }
     }
+    @keyframes status-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+      50% { box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.2); }
+    }
     .node-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      margin-bottom: 7px;
-      overflow-wrap: anywhere;
+      margin: 0;
+      min-height: 16px;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .node-meta {
       font-size: 12px;
       color: var(--muted);
       line-height: 1.4;
       overflow-wrap: anywhere;
+    }
+    .node-duration {
+      width: max-content;
+      max-width: 100%;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1;
+      padding: 0;
+      min-height: 11px;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .node-duration.empty {
+      visibility: hidden;
+    }
+    .node-duration.running {
+      color: var(--slate);
+      font-weight: 600;
     }
     .phase-lane {
       border-top: 1px solid #e6e9ef;
@@ -1322,18 +1565,53 @@ def dashboard_html() -> str:
     .badge {
       display: inline-flex;
       align-items: center;
-      height: 22px;
-      border-radius: 999px;
-      padding: 0 8px;
-      font-size: 11px;
-      border: 1px solid var(--line);
+      gap: 6px;
+      width: max-content;
+      max-width: 100%;
+      min-height: 18px;
+      padding: 0;
       margin-top: 8px;
-      color: var(--slate);
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: 0;
     }
-    .badge.completed { border-color: #9ed7c1; color: var(--green); background: #f1fbf7; }
-    .badge.running { border-color: #adc7ff; color: var(--blue); background: #f2f6ff; }
-    .badge.error, .badge.failed { border-color: #ee9d97; color: var(--red); background: #fff2f1; }
-    .badge.pending { color: var(--muted); background: #f8fafc; }
+    .node .badge {
+      position: absolute;
+      left: 10px;
+      bottom: 8px;
+      margin: 0;
+    }
+    .badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.12);
+      flex: 0 0 auto;
+    }
+    .badge.completed { color: var(--green); }
+    .badge.completed::before {
+      background: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+    }
+    .badge.running { color: var(--blue); }
+    .badge.running::before {
+      background: var(--blue);
+      animation: status-pulse 1.8s ease-in-out infinite;
+    }
+    .badge.error, .badge.failed { color: var(--red); }
+    .badge.error::before,
+    .badge.failed::before {
+      background: var(--red);
+      box-shadow: 0 0 0 3px rgba(194, 65, 58, 0.12);
+    }
+    .badge.pending { color: var(--muted); }
     .metrics {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1397,64 +1675,110 @@ def dashboard_html() -> str:
     .check-list .path-row {
       grid-template-columns: 120px minmax(0, 1fr);
     }
-    .current-card {
-      display: grid;
-      gap: 12px;
-    }
-    .current-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    .eyebrow {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0;
-      margin-bottom: 3px;
-    }
-    .run-id {
-      display: block;
-      font-size: 13px;
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
-    .run-request {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-    .run-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .next-box {
-      border-top: 1px solid #eef1f5;
-      padding-top: 10px;
-      display: grid;
-      gap: 4px;
-      font-size: 12px;
-    }
-    .next-box strong {
-      font-size: 12px;
-    }
-    .next-box span {
-      color: var(--muted);
-      line-height: 1.4;
-    }
     .history-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
-      margin-bottom: 12px;
     }
+    .overview-layout {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+    .overview-chart {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfe;
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      min-width: 0;
+    }
+    .overview-chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .overview-chart-head strong {
+      color: var(--text);
+      font-size: 13px;
+    }
+    .overview-distribution {
+      display: grid;
+      gap: 9px;
+    }
+    .overview-status-row {
+      display: grid;
+      grid-template-columns: minmax(104px, 150px) minmax(0, 1fr) minmax(74px, auto);
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+    .overview-status-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+      min-width: 0;
+    }
+    .overview-status-label span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .overview-track {
+      height: 10px;
+      border-radius: 999px;
+      background: #edf1f7;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .overview-fill {
+      height: 100%;
+      min-width: 0;
+      border-radius: 999px;
+      background: #94a3b8;
+    }
+    .overview-fill.active { background: var(--blue); }
+    .overview-fill.completed { background: var(--green); }
+    .overview-fill.waiting { background: #d59a25; }
+    .overview-fill.error { background: var(--red); }
+    .overview-fill.other { background: #94a3b8; }
+    .overview-status-value {
+      display: grid;
+      grid-template-columns: auto 34px;
+      justify-content: end;
+      gap: 8px;
+      align-items: baseline;
+      white-space: nowrap;
+    }
+    .overview-status-value strong { font-size: 13px; line-height: 1; }
+    .overview-status-value span {
+      color: var(--muted);
+      font-size: 11px;
+      text-align: right;
+    }
+    .overview-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #94a3b8;
+    }
+    .overview-dot.active { background: var(--blue); }
+    .overview-dot.completed { background: var(--green); }
+    .overview-dot.waiting { background: #d59a25; }
+    .overview-dot.error { background: var(--red); }
+    .overview-dot.other { background: #94a3b8; }
     .history-stat {
       appearance: none;
       width: 100%;
-      min-height: 64px;
+      min-height: 72px;
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 9px 10px;
@@ -1463,8 +1787,8 @@ def dashboard_html() -> str:
       font: inherit;
       text-align: left;
       display: grid;
-      align-content: center;
-      gap: 3px;
+      align-content: start;
+      gap: 4px;
     }
     .history-stat.clickable {
       cursor: pointer;
@@ -1483,7 +1807,8 @@ def dashboard_html() -> str:
       opacity: 0.55;
     }
     .history-stat:focus-visible,
-    .history-detail-item:focus-visible {
+    .history-detail-item:focus-visible,
+    .recent-filter:focus-visible {
       outline: 2px solid #3b82f6;
       outline-offset: 2px;
     }
@@ -1497,10 +1822,65 @@ def dashboard_html() -> str:
       line-height: 1.1;
       font-weight: 700;
     }
+    .history-action {
+      margin-top: 2px;
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .history-stat.danger .history-action {
+      color: var(--red);
+    }
+    .history-stat:disabled .history-action {
+      color: var(--muted);
+    }
+    .history-action::after {
+      content: " ->";
+    }
+    .history-stat:disabled .history-action::after {
+      content: "";
+    }
     .history-issues {
       display: grid;
       gap: 0;
       margin-top: 12px;
+    }
+    .recent-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .recent-filter {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--slate);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      line-height: 1;
+      padding: 7px 10px;
+    }
+    .recent-filter:hover,
+    .recent-filter.selected {
+      border-color: #84a9ff;
+      background: #f7faff;
+      color: var(--blue);
+    }
+    .recent-filter.danger.selected {
+      border-color: #f1a7a0;
+      background: #fff8f7;
+      color: var(--red);
+    }
+    .run-detail {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
     .history-detail {
       display: grid;
@@ -1590,6 +1970,8 @@ def dashboard_html() -> str:
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
+      margin-top: 10px;
+      padding-left: 8px;
     }
     .history-more-btn {
       appearance: none;
@@ -1679,6 +2061,10 @@ def dashboard_html() -> str:
       .stage-lane { grid-template-columns: 1fr; gap: 10px; }
       .stage-lane .node::before, .stage-lane .node::after { display: none; }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .history-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .overview-layout { grid-template-columns: 1fr; }
+      .overview-status-row { grid-template-columns: minmax(86px, 112px) minmax(0, 1fr) minmax(64px, auto); }
+      .review-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -1691,46 +2077,39 @@ def dashboard_html() -> str:
     <div class="statusbar" id="statusbar"></div>
   </header>
   <main>
+    <section class="wide-section">
+      <div class="section-head"><h2>Run Overview</h2></div>
+      <div class="section-body">
+        <div id="history"></div>
+      </div>
+    </section>
     <div class="stack">
       <section>
         <div class="section-head">
-          <h2>Workflow</h2>
+          <h2>Current Workflow</h2>
           <span class="elapsed-counter" id="elapsed-counter">idle</span>
         </div>
         <div class="section-body">
+          <div class="workflow-context" id="workflow-context"></div>
           <div class="flow-board">
             <div class="flow-inner" id="flow"></div>
           </div>
           <div class="metrics" id="metrics"></div>
         </div>
       </section>
+      <section id="run-review-section" hidden>
+        <div class="section-head"><h2>Run Review</h2></div>
+        <div class="section-body" id="run-review"></div>
+      </section>
       <section>
         <div class="section-head"><h2>Outputs</h2></div>
         <div class="section-body" id="outputs"></div>
       </section>
-      <section>
-        <div class="section-head"><h2>Recent Runs</h2></div>
-        <div class="section-body" id="recent"></div>
-      </section>
     </div>
-    <aside class="stack">
-      <section>
-        <div class="section-head"><h2 id="run-details-title">Current Run</h2></div>
-        <div class="section-body" id="current"></div>
-      </section>
-      <section>
-        <div class="section-head"><h2>Run History</h2></div>
-        <div class="section-body" id="history"></div>
-      </section>
-      <section id="diagnostics-section" hidden>
-        <div class="section-head"><h2>Review Checks</h2></div>
-        <div class="section-body" id="diagnostics"></div>
-      </section>
-      <section id="feedback-section" hidden>
-        <div class="section-head"><h2>Feedback</h2></div>
-        <div class="section-body" id="feedback"></div>
-      </section>
-    </aside>
+    <section class="wide-section" id="runs-section">
+      <div class="section-head"><h2>Runs</h2></div>
+      <div class="section-body" id="recent"></div>
+    </section>
   </main>
   <script>
     const STAGES = ["clarify", "context_gather", "plan", "generate", "evaluate"];
@@ -1745,9 +2124,9 @@ def dashboard_html() -> str:
     let elapsedTimer = null;
     let latestPayload = null;
     let selectedRunId = null;
-    let historyFilter = null;
+    let historyFilter = "all";
     let historyVisibleCounts = {};
-    const HISTORY_INITIAL_VISIBLE = 5;
+    const HISTORY_INITIAL_VISIBLE = 10;
     const HISTORY_PAGE_SIZE = 10;
     const HISTORY_FILTER_LABELS = {
       all: "All runs",
@@ -1771,6 +2150,9 @@ def dashboard_html() -> str:
     }
     function chip(label, status) {
       return `<span class="chip ${cls(status)}">${escapeHtml(label)}</span>`;
+    }
+    function metaChip(label, value) {
+      return `<span class="meta-chip"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></span>`;
     }
     function badge(status) {
       return `<span class="badge ${cls(status)}">${escapeHtml(text(status, "pending"))}</span>`;
@@ -1808,8 +2190,54 @@ def dashboard_html() -> str:
       if (secs || !parts.length) parts.push(`${secs}s`);
       return parts.join(" ");
     }
+    function formatStageDuration(seconds) {
+      const total = Math.max(0, Number(seconds || 0));
+      if (total < 60) return `${total}s`;
+      const days = Math.floor(total / 86400);
+      const hours = Math.floor((total % 86400) / 3600);
+      const minutes = Math.floor((total % 3600) / 60);
+      const parts = [];
+      if (days) parts.push(`${days}d`);
+      if (hours) parts.push(`${hours}h`);
+      if (minutes || !parts.length) parts.push(`${minutes}m`);
+      return parts.join(" ");
+    }
     function terminalStatus(status) {
       return ["completed", "error"].includes(text(status, "").toLowerCase());
+    }
+    function stageTiming(stage) {
+      return stage?.timing || {};
+    }
+    function stageStartedAt(stage) {
+      const timing = stageTiming(stage);
+      return timing.started_at || stage?.started_at || null;
+    }
+    function stageDuration(stage, summary, isActive) {
+      const status = text(stage?.status, "pending").toLowerCase();
+      const timing = stageTiming(stage);
+      if (status === "running") {
+        const elapsed = secondsSince(stageStartedAt(stage) || summary.created_at);
+        return {
+          label: elapsed === null ? "running" : formatStageDuration(elapsed),
+          live: elapsed !== null,
+          tone: "running"
+        };
+      }
+      const stored = timing.duration_seconds;
+      if (stored !== undefined && stored !== null) {
+        return { label: formatStageDuration(stored), live: false, tone: status };
+      }
+      if (isActive && !terminalStatus(summary.status)) {
+        const elapsed = secondsSince(stageStartedAt(stage) || summary.created_at);
+        if (elapsed !== null) return { label: formatStageDuration(elapsed), live: false, tone: status };
+      }
+      return null;
+    }
+    function setElapsed(label, duration, tone = "") {
+      const target = document.getElementById("elapsed-counter");
+      if (!target) return;
+      const toneClass = tone ? ` ${tone}` : "";
+      target.innerHTML = `<span class="elapsed-label">${escapeHtml(label)}</span><span class="elapsed-time${toneClass}">${escapeHtml(duration)}</span>`;
     }
     function renderElapsed(payload = latestPayload) {
       const target = document.getElementById("elapsed-counter");
@@ -1826,17 +2254,17 @@ def dashboard_html() -> str:
       const stageLabel = STAGE_LABELS[summary.current_stage] || text(summary.current_stage, "running");
       const phase = summary.current_phase ? ` · ${summary.current_phase}` : "";
       if (terminalStatus(summary.status)) {
-        target.textContent = `duration ${formatDuration(summary.duration_seconds || 0)}`;
+        setElapsed("duration", formatDuration(summary.duration_seconds || 0), "done");
         document.querySelectorAll("[data-elapsed-live]").forEach(item => {
           item.textContent = `${formatDuration(summary.duration_seconds || 0)} total`;
         });
         return;
       }
-      const elapsed = secondsSince(stage.started_at || summary.created_at);
-      const label = elapsed === null
-        ? `${stageLabel}${phase} running`
-        : `${stageLabel}${phase} ${formatDuration(elapsed)}`;
-      target.textContent = label;
+      const elapsed = secondsSince(stageStartedAt(stage) || summary.created_at);
+      setElapsed(`${stageLabel}${phase}`, elapsed === null ? "running" : formatDuration(elapsed));
+      document.querySelectorAll("[data-stage-live]").forEach(item => {
+        item.textContent = elapsed === null ? "running" : formatStageDuration(elapsed);
+      });
       document.querySelectorAll("[data-elapsed-live]").forEach(item => {
         item.textContent = elapsed === null ? "running" : formatDuration(elapsed);
       });
@@ -1846,7 +2274,7 @@ def dashboard_html() -> str:
       return Boolean(run?.run_id) && !["completed", "error"].includes(status);
     }
     function resumeRequest(runId) {
-      return `phaseharness로 ${runId} 이어서 진행해줘.`;
+      return `Use phaseharness to resume run ${runId}.`;
     }
     function copyIcon() {
       return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
@@ -1920,8 +2348,13 @@ def dashboard_html() -> str:
       if (active) classes.push("active");
       if (options.flowing) classes.push("flowing");
       if (options.last) classes.push("last");
+      const duration = options.duration;
+      const durationHtml = duration
+        ? `<div class="node-duration ${escapeHtml(duration.tone || "")}"${duration.live ? " data-stage-live" : ""}>${escapeHtml(duration.label)}</div>`
+        : `<div class="node-duration empty" aria-hidden="true">0m</div>`;
       return `<div class="${classes.join(" ")}">
         <div class="node-title">${escapeHtml(stage)}</div>
+        ${durationHtml}
         ${badge(status)}
       </div>`;
     }
@@ -1936,16 +2369,24 @@ def dashboard_html() -> str:
         const state = stages[stage] || { status: "pending", attempts: 0 };
         const isActive = summary.current_stage === stage;
         const isFlowing = isActive && i < STAGES.length - 1;
-        stageNodes += node(STAGE_LABELS[stage], state.status, "", isActive, { flowing: isFlowing, last: i === STAGES.length - 1 });
+        stageNodes += node(STAGE_LABELS[stage], state.status, "", isActive, {
+          flowing: isFlowing,
+          last: i === STAGES.length - 1,
+          duration: stageDuration(state, summary, isActive)
+        });
       }
       const phases = progress.phases || [];
       const phaseCards = phases.length
-        ? phases.map(phase => `<div class="phase-card ${phase.current ? "active" : ""}">
+        ? phases.map(phase => {
+          const state = fileState(phase.file);
+          const fileNote = state === "ok" ? "" : ` · file ${state}`;
+          return `<div class="phase-card ${phase.current ? "active" : ""}">
             <div class="phase-name">${escapeHtml(phase.title || phase.phase_id)}</div>
-            <div class="phase-meta">${escapeHtml(phase.phase_id)} · ${escapeHtml(fileState(phase.file))}</div>
+            <div class="phase-meta">${escapeHtml(phase.phase_id)}${escapeHtml(fileNote)}</div>
             ${phase.summary ? `<div class="phase-summary">${escapeHtml(phase.summary)}</div>` : ""}
             ${badge(phase.status)}
-          </div>`).join("")
+          </div>`;
+        }).join("")
         : `<div class="empty">No generate phase files found.</div>`;
       document.getElementById("flow").innerHTML = `
         <div class="stage-lane">${stageNodes}</div>
@@ -1959,61 +2400,116 @@ def dashboard_html() -> str:
       const summary = current?.views?.summary || {};
       const resume = current?.views?.resume || {};
       const metrics = [
-        ["Status", summary.status],
-        ["Next Action", resume.next_action],
+        ["Stage", summary.current_stage],
+        ["Phase", summary.current_phase],
         ["Loop", summary.loop ? `${summary.loop.current || 1}/${summary.loop.max || 1}` : "none"],
         ["Evaluation", summary.evaluation_status]
       ];
       document.getElementById("metrics").innerHTML = metrics.map(([label, value]) => `<div class="metric"><div class="metric-label">${label}</div><div class="metric-value">${escapeHtml(text(value))}</div></div>`).join("");
     }
-    function renderCurrent(payload) {
+    function findHistoryItem(payload, runId, preferredGroup = null) {
+      const groups = payload.history?.groups || {};
+      const order = [preferredGroup, "failed", "resumable", "running", "all"].filter(Boolean);
+      for (const group of order) {
+        for (const item of groups[group] || []) {
+          if (item.run_id === runId) return item;
+        }
+      }
+      return null;
+    }
+    function uniqueNonEmpty(items) {
+      const seen = new Set();
+      const result = [];
+      for (const item of items || []) {
+        const value = text(item, "").replace(/^[-*]\s*/, "").trim();
+        if (!value || seen.has(value)) continue;
+        seen.add(value);
+        result.push(value);
+      }
+      return result;
+    }
+    function failureEvidence(diagnostics) {
+      const intent = diagnostics.intent_alignment || {};
+      const guidance = diagnostics.guidance_compliance || {};
+      const failure = diagnostics.failure_analysis || {};
+      const validation = diagnostics.validation || {};
+      return uniqueNonEmpty([
+        ...(intent.failed_requirements || []),
+        ...(guidance.violations || []),
+        ...(failure.findings || []),
+        ...(validation.failed_commands || []),
+        ...(diagnostics.missing_data || [])
+      ]).slice(0, 3);
+    }
+    function resultBanner(payload, current, summary) {
+      const status = text(summary.status, "").toLowerCase();
+      if (["error", "failed", "fail"].includes(status)) {
+        const item = findHistoryItem(payload, summary.run_id, "failed");
+        const diagnostics = current.views?.diagnostics || {};
+        const findings = diagnostics.failure_analysis?.findings || [];
+        const reason = item?.reason || item?.detail || findings[0] || "No failure reason recorded.";
+        const evidence = failureEvidence(diagnostics).filter(item => item !== reason);
+        return `<div class="run-result error">
+          <div class="run-result-title"><strong>Why it failed</strong><span>${escapeHtml(summary.current_stage || "run")}</span></div>
+          <div class="run-result-reason">${escapeHtml(reason)}</div>
+          ${evidence.length ? `<ul class="run-result-list">${evidence.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+        </div>`;
+      }
+      if (status === "completed") {
+        const evaluation = summary.evaluation_status ? `Evaluation ${summary.evaluation_status}` : "Run completed";
+        return `<div class="run-result completed"><div class="run-result-title"><strong>Completed</strong><span>${escapeHtml(evaluation)}</span></div></div>`;
+      }
+      return "";
+    }
+    function renderWorkflowContext(payload) {
+      const target = document.getElementById("workflow-context");
+      if (!target) return;
       const current = currentData(payload);
       if (!current) {
-        document.getElementById("current").innerHTML = `<div class="empty">No active phaseharness run.</div>`;
+        target.innerHTML = `<div class="empty">No active phaseharness run.</div>`;
         return;
       }
       const summary = current.views.summary;
       const resume = current.views.resume;
-      document.getElementById("run-details-title").textContent = summary.run_id === payload.active_run ? "Current Run" : "Run Details";
+      const request = resumeRequest(summary.run_id);
       const hint = canResumeRun(summary)
-        ? `<div class="resume-hint">Resume request
-            <div class="resume-action"><code>${escapeHtml(resumeRequest(summary.run_id))}</code>${copyButton(resumeRequest(summary.run_id))}</div>
-          </div>`
+        ? `<div class="resume-hint workflow-resume"><span>Resume</span><code>${escapeHtml(request)}</code>${copyButton(request)}</div>`
         : "";
-      document.getElementById("current").innerHTML = `<div class="current-card">
-        <div class="current-top">
-          <div>
-            <div class="eyebrow">${escapeHtml(summary.mode || "run")}</div>
-            <code class="run-id">${escapeHtml(summary.run_id)}</code>
+      target.innerHTML = `
+        <div class="workflow-context-top">
+          <div class="workflow-run">
+            <div class="workflow-title-line">
+              <span class="workflow-run-id">${escapeHtml(summary.run_id)}</span>
+            </div>
+            <div class="workflow-run-line">
+              ${metaChip("Mode", summary.mode || "unknown")}
+              ${metaChip("Branch", summary.worktree?.branch || "unknown")}
+            </div>
           </div>
-          ${badge(summary.status)}
         </div>
-        <div class="run-request">${escapeHtml(summary.request || "No request recorded.")}</div>
-        <div class="run-meta">
-          ${chip(summary.worktree?.branch || "unknown branch", "pending")}
-        </div>
-        <div class="next-box">
-          <strong>${escapeHtml(resume.next_action || "none")}</strong>
-          <span>${escapeHtml(resume.reason || "No pending action.")}</span>
-        </div>
-        ${hint}
-      </div>`;
+        ${resultBanner(payload, current, summary)}
+        ${hint}`;
     }
     function historyCard(key, label, value, options = {}) {
       const count = Number(value || 0);
       const selected = historyFilter === key ? " selected" : "";
       const danger = options.danger ? " danger" : "";
-      return `<button type="button" class="history-stat clickable${selected}${danger}" data-history-filter="${escapeHtml(key)}" onclick="selectHistoryFilter('${escapeHtml(key)}')" ${count ? "" : "disabled"}>
+      const action = count ? (selected ? "Showing in Runs" : "View list") : "No runs";
+      return `<button type="button" class="history-stat clickable${selected}${danger}" onclick="selectHistoryFilter('${escapeHtml(key)}', true)" ${count ? "" : "disabled"}>
         <div class="history-label">${escapeHtml(label)}</div>
         <div class="history-value">${escapeHtml(count)}</div>
+        <div class="history-action">${escapeHtml(action)}</div>
       </button>`;
     }
-    function selectHistoryFilter(key) {
-      historyFilter = historyFilter === key ? null : key;
-      if (historyFilter && !historyVisibleCounts[historyFilter]) {
+    function selectHistoryFilter(key, scrollToRuns = false) {
+      historyFilter = key || "all";
+      if (!historyVisibleCounts[historyFilter]) {
         historyVisibleCounts[historyFilter] = HISTORY_INITIAL_VISIBLE;
       }
       renderDashboard(latestPayload);
+      if (scrollToRuns) {
+        setTimeout(() => document.getElementById("runs-section")?.scrollIntoView({ block: "start", behavior: "smooth" }), 0);
+      }
     }
     function showMoreHistory(key) {
       historyVisibleCounts[key] = (historyVisibleCounts[key] || HISTORY_INITIAL_VISIBLE) + HISTORY_PAGE_SIZE;
@@ -2066,6 +2562,30 @@ def dashboard_html() -> str:
         </div>` : ""}
       </div>`;
     }
+    function renderHistoryChart(history) {
+      const status = history.status || {};
+      const total = Math.max(0, Number(history.total || 0));
+      const rows = [
+        ["error", "Failed", Number(status.error || 0)],
+        ["active", "Running", Number(status.active || 0)],
+        ["waiting", "Waiting", Number(status.waiting_user || 0)],
+        ["completed", "Completed", Number(status.completed || 0)],
+        ["other", "Other", Number(status.other || 0)]
+      ];
+      const distribution = rows.map(([key, label, count]) => {
+        const percent = total ? Math.round((count / total) * 100) : 0;
+        const width = count > 0 ? Math.max(2, percent) : 0;
+        return `<div class="overview-status-row">
+          <div class="overview-status-label"><span class="overview-dot ${escapeHtml(key)}"></span><span>${escapeHtml(label)}</span></div>
+          <div class="overview-track"><div class="overview-fill ${escapeHtml(key)}" style="width: ${width}%"></div></div>
+          <div class="overview-status-value"><strong>${escapeHtml(count)}</strong><span>${escapeHtml(percent)}%</span></div>
+        </div>`;
+      }).join("");
+      return `<div class="overview-chart">
+        <div class="overview-chart-head"><strong>Status distribution</strong><span>${escapeHtml(total)} total</span></div>
+        <div class="overview-distribution" aria-label="Run status distribution">${distribution}</div>
+      </div>`;
+    }
     function renderHistory(payload) {
       const history = payload.history || {};
       const status = history.status || {};
@@ -2075,13 +2595,15 @@ def dashboard_html() -> str:
       }
       const activeTotal = status.active || 0;
       document.getElementById("history").innerHTML = `
-        <div class="history-grid">
-          ${historyCard("all", "All runs", history.total)}
-          ${historyCard("running", "Running now", activeTotal)}
-          ${historyCard("resumable", "Can continue", history.resumable || 0)}
-          ${historyCard("failed", "Failed", status.error || 0, { danger: true })}
-        </div>
-        ${renderHistoryDetails(history)}`;
+        <div class="overview-layout">
+          ${renderHistoryChart(history)}
+          <div class="history-grid">
+            ${historyCard("all", "All runs", history.total)}
+            ${historyCard("running", "Running now", activeTotal)}
+            ${historyCard("resumable", "Can continue", history.resumable || 0)}
+            ${historyCard("failed", "Failed", status.error || 0, { danger: true })}
+          </div>
+        </div>`;
     }
     function renderOutputs(payload) {
       const current = currentData(payload);
@@ -2094,81 +2616,117 @@ def dashboard_html() -> str:
       for (const item of current.outputs.phases || []) rows.push(["phase", item.phase_id, fileState(item), item.path]);
       document.getElementById("outputs").innerHTML = `<table><thead><tr><th>Kind</th><th>Name</th><th>State</th><th>Path</th></tr></thead><tbody>${rows.map(row => `<tr><td>${escapeHtml(row[0])}</td><td>${escapeHtml(row[1])}</td><td>${escapeHtml(row[2])}</td><td><code>${escapeHtml(row[3])}</code></td></tr>`).join("")}</tbody></table>`;
     }
-    function renderDiagnostics(payload) {
-      const diagnostics = currentData(payload)?.views?.diagnostics;
-      const section = document.getElementById("diagnostics-section");
-      if (!diagnostics) {
-        section.hidden = true;
-        document.getElementById("diagnostics").innerHTML = `<div class="empty">No diagnostics.</div>`;
-        return;
-      }
+    function reviewValueClass(value) {
+      const status = text(value, "").toLowerCase();
+      if (["fail", "failed", "error"].includes(status)) return "fail";
+      if (["pass", "warn", "completed"].includes(status)) return status;
+      return "";
+    }
+    function reviewRow(label, value, description) {
+      return `<div class="review-row">
+        <div class="review-label"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(description)}</span></div>
+        <div class="review-value ${escapeHtml(reviewValueClass(value))}">${escapeHtml(text(value, "none"))}</div>
+      </div>`;
+    }
+    function renderRunReview(payload) {
+      const current = currentData(payload);
+      const section = document.getElementById("run-review-section");
+      const target = document.getElementById("run-review");
+      if (!section || !target || !current) return;
+      const summary = current.views?.summary || {};
+      const diagnostics = current.views?.diagnostics || {};
+      const feedback = current.views?.feedback?.counts || {};
       const validation = diagnostics.validation || {};
-      const hasDiagnostics =
+      const status = text(summary.status, "").toLowerCase();
+      const hasReview =
+        ["error", "failed", "fail"].includes(status) ||
         text(diagnostics.intent_alignment?.status, "pending") !== "pending" ||
         text(diagnostics.guidance_compliance?.status, "pending") !== "pending" ||
-        (validation.commands_found || []).length > 0 ||
-        (validation.failed_commands || []).length > 0;
-      section.hidden = !hasDiagnostics;
-      if (!hasDiagnostics) return;
-      document.getElementById("diagnostics").innerHTML = `<div class="path-list check-list">
-        <div class="path-row"><strong>Requirements</strong><span>${escapeHtml(diagnostics.intent_alignment?.status)}</span></div>
-        <div class="path-row"><strong>Guidance</strong><span>${escapeHtml(diagnostics.guidance_compliance?.status)}</span></div>
-        <div class="path-row"><strong>Checks</strong><span>${(validation.commands_found || []).length}</span></div>
-        <div class="path-row"><strong>Failed</strong><span>${(validation.failed_commands || []).length}</span></div>
-      </div>`;
-    }
-    function renderFeedback(payload) {
-      const counts = currentData(payload)?.views?.feedback?.counts;
-      const section = document.getElementById("feedback-section");
-      if (!counts) {
-        section.hidden = true;
-        document.getElementById("feedback").innerHTML = `<div class="empty">No feedback counts.</div>`;
+        Object.values(feedback).some(value => Number(value || 0) > 0);
+      section.hidden = !hasReview;
+      if (!hasReview) {
+        target.innerHTML = "";
         return;
       }
-      const hasFeedback = Boolean(
-        (counts.evaluate_failures || 0) ||
-        (counts.followup_phases || 0) ||
-        (counts.loop_retries || 0) ||
-        (counts.explicit_post_completion_feedback || 0)
-      );
-      section.hidden = !hasFeedback;
-      if (!hasFeedback) return;
-      document.getElementById("feedback").innerHTML = `<div class="path-list">
-        <div class="path-row"><strong>Evaluate failures</strong><span>${counts.evaluate_failures || 0}</span></div>
-        <div class="path-row"><strong>Follow-ups</strong><span>${counts.followup_phases || 0}</span></div>
-        <div class="path-row"><strong>Loop retries</strong><span>${counts.loop_retries || 0}</span></div>
-        <div class="path-row"><strong>Post completion</strong><span>${counts.explicit_post_completion_feedback || 0}</span></div>
+      const reviewChecks = [
+        reviewRow("Requirements", diagnostics.intent_alignment?.status, "Evaluation against the original request."),
+        reviewRow("Guidance", diagnostics.guidance_compliance?.status, "Whether harness guidance and constraints were followed."),
+        reviewRow("Checks", (validation.commands_found || []).length, "Validation commands detected in plan/evaluate artifacts."),
+        reviewRow("Failed", (validation.failed_commands || []).length, "Validation commands recorded as failed.")
+      ].join("");
+      const feedbackRows = [
+        reviewRow("Evaluate failures", feedback.evaluate_failures || 0, "Times evaluate produced a fail result."),
+        reviewRow("Follow-ups", feedback.followup_phases || 0, "Follow-up phases created after evaluation."),
+        reviewRow("Loop retries", feedback.loop_retries || 0, "Retry loops used by the run."),
+        reviewRow("Post completion", feedback.explicit_post_completion_feedback || 0, "Explicit feedback after completion.")
+      ].join("");
+      target.innerHTML = `<div class="review-grid">
+        <div class="review-card"><h3>Review Checks</h3><div class="review-list">${reviewChecks}</div></div>
+        <div class="review-card"><h3>Feedback</h3><div class="review-list">${feedbackRows}</div></div>
       </div>`;
     }
+    function historyFilterButton(key, label, count, options = {}) {
+      const selected = historyFilter === key ? " selected" : "";
+      const danger = options.danger ? " danger" : "";
+      return `<button type="button" class="recent-filter${selected}${danger}" onclick="selectHistoryFilter('${escapeHtml(key)}')">${escapeHtml(label)} ${escapeHtml(count)}</button>`;
+    }
     function renderRecent(payload) {
-      const runs = payload.recent_runs || [];
+      const history = payload.history || {};
+      const status = history.status || {};
+      const groups = history.groups || {};
+      const filter = historyFilter || "all";
+      const runs = groups[filter] || [];
       const selected = selectedSummary(payload);
       const selectedId = selected?.run_id || payload.active_run;
-      if (!runs.length) {
+      if (!history.total) {
         document.getElementById("recent").innerHTML = `<div class="empty">No recent runs.</div>`;
         return;
       }
-      document.getElementById("recent").innerHTML = `<table><thead><tr><th>Run</th><th>Status</th><th>Stage</th><th>Phase</th><th>Updated</th><th>Resume</th></tr></thead><tbody>${runs.map(run => {
+      const totals = {
+        all: history.total || 0,
+        running: status.active || 0,
+        resumable: history.resumable || 0,
+        failed: status.error || 0
+      };
+      const visibleCount = Math.min(historyVisibleCounts[filter] || HISTORY_INITIAL_VISIBLE, runs.length);
+      const visibleRuns = runs.slice(0, visibleCount);
+      const hiddenCount = Math.max(0, runs.length - visibleCount);
+      const controls = `<div class="recent-filter-row">
+        ${historyFilterButton("all", "All", totals.all)}
+        ${historyFilterButton("running", "Running", totals.running)}
+        ${historyFilterButton("resumable", "Can continue", totals.resumable)}
+        ${historyFilterButton("failed", "Failed", totals.failed, { danger: true })}
+      </div>`;
+      const table = visibleRuns.length
+        ? `<table><thead><tr><th>Run</th><th>Status</th><th>Stage</th><th>Phase</th><th>Updated</th><th>Resume</th></tr></thead><tbody>${visibleRuns.map(run => {
         const resume = resumeRequest(run.run_id);
         const action = canResumeRun(run)
           ? `<div class="resume-action"><code>${escapeHtml(resume)}</code>${copyButton(resume)}</div>`
           : "done";
         const classes = ["run-row"];
         if (run.run_id === selectedId) classes.push("selected");
-        return `<tr class="${classes.join(" ")}" onclick="selectRun('${escapeHtml(run.run_id)}')"><td><code>${escapeHtml(run.run_id)}</code></td><td>${escapeHtml(run.status)}</td><td>${escapeHtml(run.current_stage)}</td><td>${escapeHtml(run.current_phase || "none")}</td><td>${escapeHtml(formatLocalDateTime(run.updated_at || run.created_at))}</td><td>${action}</td></tr>`;
-      }).join("")}</tbody></table>`;
+        const stage = run.current_stage || run.stage;
+        const phase = run.current_phase || run.phase;
+        const detail = run.reason || run.detail;
+        return `<tr class="${classes.join(" ")}" onclick="selectRun('${escapeHtml(run.run_id)}')"><td><code>${escapeHtml(run.run_id)}</code>${detail ? `<div class="run-detail">${escapeHtml(detail)}</div>` : ""}</td><td>${escapeHtml(run.status)}</td><td>${escapeHtml(stage)}</td><td>${escapeHtml(phase || "none")}</td><td>${escapeHtml(formatLocalDateTime(run.updated_at || run.created_at))}</td><td>${action}</td></tr>`;
+      }).join("")}</tbody></table>`
+        : `<div class="empty">No runs in this filter.</div>`;
+      const actions = runs.length ? `<div class="history-detail-actions">
+        ${visibleCount < runs.length ? `<button type="button" class="history-more-btn" onclick="showMoreHistory('${escapeHtml(filter)}')">Show 10 more${hiddenCount ? ` (${hiddenCount} left)` : ""}</button>` : ""}
+        ${visibleCount > HISTORY_INITIAL_VISIBLE ? `<button type="button" class="history-more-btn" onclick="collapseHistory('${escapeHtml(filter)}')">Collapse</button>` : ""}
+      </div>` : "";
+      document.getElementById("recent").innerHTML = `${controls}${table}${actions}`;
     }
     function renderDashboard(payload) {
       if (!payload) return;
       if (selectedRunId && !payload.run_details?.[selectedRunId]) selectedRunId = null;
       renderHeader(payload);
+      renderWorkflowContext(payload);
       renderFlow(payload);
       renderMetrics(payload);
-      renderCurrent(payload);
       renderHistory(payload);
+      renderRunReview(payload);
       renderOutputs(payload);
-      renderDiagnostics(payload);
-      renderFeedback(payload);
       renderRecent(payload);
       renderElapsed(payload);
     }

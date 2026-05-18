@@ -16,7 +16,7 @@ It does not change workflow state, prompts, artifacts, product code, commits, or
 - The command keeps running. Keep it open while the user wants the dashboard page.
 - Open the printed localhost URL in the browser.
 - The page polls `/api/dashboard` every 2 seconds and updates automatically.
-- The page is read-only. Resume controls should show copyable `phaseharness로 <run-id> 이어서 진행해줘.` requests, not mutate run state directly.
+- The page is read-only. Resume controls should show copyable `Use phaseharness to resume run <run-id>.` requests, not mutate run state directly.
 - If no runs exist, say that no Phaseharness runs were found in this worktree.
 - Remember that dashboard data is per worktree. Runs from another git worktree must be inspected from that worktree.
 
