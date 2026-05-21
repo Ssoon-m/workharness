@@ -10,6 +10,13 @@ venv/
 .env.*
 *.log
 
-.claude/
-.codex/
-.agents/skills/
+/node_modules/
+/coverage/
+/dist/
+/*.tgz
+/.phaseharness/
+/.claude/
+/.codex/
+/.agents/
+!/docs/
+!/docs/*.md

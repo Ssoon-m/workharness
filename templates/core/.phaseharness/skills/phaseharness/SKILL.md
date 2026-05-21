@@ -16,10 +16,10 @@ clarify -> context-gather -> plan -> generate -> evaluate
 ## Start Or Resume
 
 1. Summarize the task in one sentence.
-2. Sync provider bridges:
+2. Reconcile installed provider bridges:
 
 ```bash
-python3 .phaseharness/bin/phaseharness-sync-bridges.py
+python3 .phaseharness/bin/phaseharness-bridge.py reconcile --provider all --install-hooks
 ```
 
 3. Check active state:

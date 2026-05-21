@@ -1,63 +1,91 @@
-# Phaseharness
+# PhaseHarness
 
-Phaseharness is a harness system that helps AI coding agents process work in stages.
+PhaseHarness is a staged workflow harness for AI coding agents.
 
-Rather than providing a universal harness for every project, it focuses on helping you
-build a custom harness that fits each project's guidelines and workflow.
-
-Users can connect architecture documents, coding rules, review criteria, team tacit
-knowledge, and other project-specific guidance to Phaseharness. This helps the agent
-actively reflect project context while planning, implementing, and reviewing work.
-
-The `context-gather` stage records which documents were referenced and what was read
-from them in `.phaseharness/runs/*/artifacts/context.md`. This makes it easier to see
-what the plan was based on.
-
-The more you use `phaseharness`, the easier it becomes to identify which guidance was
-missing when results do not match expectations. Over time, this creates a natural loop
-for improving the project documentation.
-
-## Workflow
-
-Phaseharness makes the agent follow this sequence:
+It helps agents move through:
 
 ```text
 clarify -> context-gather -> plan -> generate -> evaluate
 ```
 
-- `clarify`: organize the goal, scope, success criteria, and required decisions.
-- `context-gather`: inspect relevant code and project guidance.
-- `plan`: split the work into steps that are easier to implement and review.
-- `generate`: implement the planned steps.
-- `evaluate`: review whether the final diff satisfies the original request and criteria.
-
-You can still talk to the agent normally while the workflow is running. If requirements change, tell the agent what changed.
-If you want it to stop, ask it to pause or stop.
+The harness keeps durable run state under `.phaseharness/runs/<run-id>/`, records artifacts for each stage, and can resume automatic workflows through Codex or Claude session hooks.
 
 ## Install
 
-Open Codex or Claude in the repository where you want to use Phaseharness, then paste:
+Run PhaseHarness from the repository where you want to use it:
 
-```text
-Install phaseharness from this installer document:
-https://github.com/Ssoon-m/phaseharness/blob/main/installer/install-harness.md
+```bash
+npx phaseharness@latest init
 ```
 
-The target project must be a git repository and must be able to run `python3`.
-An initial commit is not required for normal use, but it is required when creating a parallel worktree.
+For pnpm users, the equivalent command is:
+
+```bash
+pnpm dlx phaseharness@latest init
+```
+
+The installer checks that the target is a git repository and that `python3` is available. It then asks which agents to integrate with:
+
+```text
+[x] Codex
+[ ] Claude
+```
+
+You can also skip prompts:
+
+```bash
+npx phaseharness@latest init --agents codex,claude
+# or
+pnpm dlx phaseharness@latest init --agents codex,claude
+```
+
+## Agent Integrations
+
+PhaseHarness stores the install choices in:
+
+```text
+.phaseharness/install.json
+```
+
+The selected agent integrations are reconciled on SessionStart:
+
+- Codex: `.codex/config.toml`, `.codex/hooks.json`, `.agents/skills`
+- Claude: `.claude/settings.json`, `.claude/skills`
+
+`.phaseharness/skills` is the source of truth. Generated agent skill copies are updated from it by a provider-scoped SessionStart reconcile. Symlinks are not used.
+
+To add another agent later:
+
+```bash
+npx phaseharness@latest add claude
+# or
+pnpm dlx phaseharness@latest add claude
+```
+
+To manually sync generated skill copies:
+
+```bash
+npx phaseharness@latest sync
+```
+
+If a generated agent skill copy was edited directly, sync reports a conflict and does not overwrite it by default. To overwrite generated copies intentionally:
+
+```bash
+npx phaseharness@latest sync --force
+```
 
 ## Quick Start
 
-Ask the agent to use Phaseharness for the task:
+Ask the agent to use PhaseHarness for a task:
 
 ```text
 Use `phaseharness` to implement <task>.
 ```
 
-Before starting phaseharness, choose two options:
+Before starting, choose:
 
-- `loop count`: how many times implementation can be retried if review finds problems.
-- `commit mode`: whether to request commits during the workflow.
+- `loop count`: maximum `generate -> evaluate` cycles when evaluation fails
+- `commit mode`: `none`, `phase`, or `final`
 
 Defaults:
 
@@ -66,108 +94,54 @@ loop count: 2
 commit mode: none
 ```
 
-`commit mode` controls when Phaseharness asks for commits.
+## Dashboard
 
-- `none`: do not ask for commits during the workflow.
-- `phase`: ask for a commit whenever a phase from `plan` is completed in `generate`.
-- `final`: do not commit after each phase; ask for one final commit when `evaluate` passes or has only warnings.
-
-Commits are not pushed automatically. Ask the agent to push separately when you want that.
-
-## Dashboard Views
-
-You can check the current task, previous task history, and generated outputs in one place on the dashboard.
-Ask the agent like this:
+Ask the agent:
 
 ```text
 Use `phaseharness-dashboard` to show the dashboard.
 ```
 
-## Important: Connect Project Guidance
+The dashboard shows the current active run, stage progress, generated outputs, diagnostics, and run history.
 
-If your project has guidance documents the agent should follow, such as architecture documents, coding rules, or review criteria, connect them before starting the first real task.
+## Project Guidance
 
-As models improve, the agent often finds task-relevant documents by inspecting the repository during `context-gather`. Still, explicitly listing important guidance makes it more likely to be reflected consistently in the work plan and review criteria.
-
-> Continuously maintaining and connecting project-specific guidance is one of the best ways to use Phaseharness well and the first step toward building a harness that fits your project.
-
-After installing `phaseharness`, copy the example file:
+If your project has architecture docs, coding rules, or review criteria, copy the example context file:
 
 ```bash
 cp .phaseharness/context.example.json .phaseharness/context.json
 ```
 
-Then edit `.phaseharness/context.json` for your project.
+Then edit `.phaseharness/context.json`:
 
-- Put documents that affect implementation planning under `context-gather.documents`.
-- Put documents that should guide code review under `evaluate.documents`.
-- Put additional review rules under `evaluate.rules`.
+- `context-gather.documents`: documents used for planning context
+- `evaluate.documents`: documents used during review
+- `evaluate.rules`: additional review rules
 
-Use these priority values:
+## Commands
 
-- `required`: must be checked when relevant.
-- `recommended`: considered when relevant.
-- `optional`: used only when clearly relevant.
-
-If the project has no separate guidance documents, you can skip this step.
-
-## Customize Stage Prompts
-
-If connecting project guidance as documents is not enough, you can directly edit the prompt for each stage.
-
-Stage prompts such as `clarify`, `context-gather`, `plan`, `generate`, and `evaluate` live under `.phaseharness/skills`. Edit these files when you want to make the workflow or review criteria more specific to your project.
-
-Modified skill files are synced to the Codex and Claude Code skill directories on SessionStart. Do not edit `.agents/skills` or `.claude/skills` directly; manage `.phaseharness/skills` as the SSOT (Single Source of Truth).
-
-## AGENTS.md / CLAUDE.md Guide
-
-Keep only the minimum guidance that is always required before running Phaseharness in `AGENTS.md` or `CLAUDE.md`.
-
-Manage stage-specific workflow, review criteria, and project-specific rules in `.phaseharness/skills` and `.phaseharness/context.json`. This keeps the global instructions that agents always read lightweight, while allowing detailed Phaseharness guidance to improve gradually inside the harness.
-
-## Resume After A Session Ends
-
-> Here, worktree means a git worktree.
-
-If a session ends during work and you reopen Codex or Claude in the same project folder, the agent will detect the in-progress Phaseharness task and ask what to do.
-
-- `resume`: continue the existing task.
-- `start-new`: pause the existing task and start a new task in the same worktree.
-- `start-new-in-worktree`: keep the existing task as-is and start the new task in a separate git worktree.
-
-Choose `resume` to continue the previous task.
-Choose `start-new-in-worktree` when you want to keep two tasks separate.
-
-If you choose `start-new-in-worktree`, Phaseharness creates a new worktree and branch, then tells you the path. It does not automatically continue that work in the current session. Open a new Codex or Claude session at the provided worktree path and ask it to continue the Phaseharness task.
-
-This separation exists because using one session across multiple worktrees can mix up file paths, git state, and Phaseharness run state. Each worktree is safer to handle in its own session.
-
-## Run Only One Stage
-
-If the full workflow is too much for a small task, or you only need help from one stage, you can run an individual skill directly.
-
-```text
-Use `clarify` for <task>.
-Use `context-gather` for <task>.
-Use `plan` for <task>.
-Use `generate` for phase-001.
-Use `evaluate` for the current diff.
+```bash
+phaseharness init
+phaseharness add codex
+phaseharness add claude
+phaseharness sync
+phaseharness doctor
 ```
 
-Individual skills run only the requested stage once and then stop. Use `phaseharness` when you want to hand off a large task end to end; choose individual skills when you only need part of the workflow.
+## Development
 
-- Use `clarify` when you only want to organize requirements or scope first.
-- Use `context-gather` when you only want to collect relevant code and document context before implementing.
-- Use `plan` when you only want an implementation plan and phase split.
-- Use `evaluate` when implementation is already done and you want the current diff reviewed.
-- Do not use `generate` by itself as a general implementation request. Use it only when there is a phase file produced by `plan`, and you want to implement one specific phase.
+This repository is a pnpm-managed npm package. Install dependencies and run checks with:
 
-## Updating
+```bash
+pnpm install
+pnpm run check
+pnpm run pack:dry
+```
 
-Phaseharness updates are mostly handled automatically on SessionStart.
+Installable PhaseHarness files live in:
 
-Updates apply only to Phaseharness-managed files recorded in `.phaseharness/manifest.json`. Files with local edits are skipped instead of being overwritten automatically.
+```text
+templates/core/.phaseharness/
+```
 
-If you customize Phaseharness-managed files for your project, those files can block part of an update. In that case, SessionStart prints the skipped files and asks whether to overwrite them with the new Phaseharness version.
-
-To disable automatic SessionStart updates for this project, copy `.phaseharness/settings.example.json` to `.phaseharness/settings.json`, then set `update.enabled` to `false`.
+The root repository should not track a live `.phaseharness/` install. Runtime state such as `.phaseharness/state` and `.phaseharness/runs` is created only inside target projects.
