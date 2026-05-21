@@ -901,8 +901,18 @@ def load_feedback_counts(root: Path, run_id: str, generated_at: str) -> dict[str
     }
 
 
-def status_bucket(status: Any) -> str:
-    value = str(status or "").lower()
+def effective_run_status(summary: dict[str, Any]) -> str:
+    value = str(summary.get("status") or "unknown").lower()
+    evaluation_status = str(summary.get("evaluation_status") or "").lower()
+    if value == "completed" and evaluation_status == "warn":
+        return "warn"
+    return value
+
+
+def status_bucket(summary: dict[str, Any]) -> str:
+    value = effective_run_status(summary)
+    if value == "warn":
+        return "warn"
     if value == "completed":
         return "completed"
     if value in ("error", "failed", "fail"):
@@ -962,7 +972,7 @@ def history_item(summary: dict[str, Any], detail: str | None = None) -> dict[str
     detail_parts = [part for part in (stage.replace("_", " ") if stage else None, phase) if part]
     return {
         "run_id": str(summary.get("run_id") or ""),
-        "status": str(summary.get("status") or "unknown"),
+        "status": effective_run_status(summary),
         "stage": stage,
         "phase": phase,
         "updated_at": summary.get("updated_at") or summary.get("created_at"),
@@ -971,7 +981,7 @@ def history_item(summary: dict[str, Any], detail: str | None = None) -> dict[str
 
 
 def build_history_totals(root: Path, summaries: list[dict[str, Any]], generated_at: str) -> dict[str, Any]:
-    status = {"active": 0, "waiting_user": 0, "completed": 0, "error": 0, "other": 0}
+    status = {"active": 0, "waiting_user": 0, "warn": 0, "completed": 0, "error": 0, "other": 0}
     mode = {"auto": 0, "manual": 0, "other": 0}
     stages = {stage: 0 for stage in STAGES}
     feedback = {
@@ -981,10 +991,10 @@ def build_history_totals(root: Path, summaries: list[dict[str, Any]], generated_
         "explicit_post_completion_feedback": 0,
     }
     failures: list[dict[str, str]] = []
-    groups: dict[str, list[dict[str, Any]]] = {"all": [], "running": [], "resumable": [], "failed": []}
+    groups: dict[str, list[dict[str, Any]]] = {"all": [], "running": [], "waiting": [], "resumable": [], "warn": [], "failed": []}
     resumable = 0
     for summary in summaries:
-        bucket = status_bucket(summary.get("status"))
+        bucket = status_bucket(summary)
         status[bucket] = status.get(bucket, 0) + 1
         mode_value = str(summary.get("mode") or "other").lower()
         mode[mode_value if mode_value in mode else "other"] += 1
@@ -997,7 +1007,11 @@ def build_history_totals(root: Path, summaries: list[dict[str, Any]], generated_
             groups["all"].append(item)
             if bucket == "active":
                 groups["running"].append(item)
-        if bucket not in ("completed", "error"):
+            if bucket == "waiting_user":
+                groups["waiting"].append(item)
+            if bucket == "warn":
+                groups["warn"].append(item)
+        if bucket not in ("completed", "warn", "error"):
             resumable += 1
             if run_id:
                 groups["resumable"].append(item)
@@ -1142,9 +1156,13 @@ def dashboard_html() -> str:
       --color-green-soft: #f1fbf7;
       --color-green-subtle: #f5fcf8;
       --color-amber: #b7791f;
-      --color-amber-dot: #d59a25;
+      --color-amber-dot: #eab308;
       --color-amber-line: #ead19a;
       --color-amber-soft: #fff9ea;
+      --color-waiting: #7c3aed;
+      --color-waiting-dot: #8b5cf6;
+      --color-waiting-line: #c4b5fd;
+      --color-waiting-soft: #f5f3ff;
       --color-red: #c2413a;
       --color-red-line: #f1bbb6;
       --color-red-line-soft: #f1a7a0;
@@ -1169,6 +1187,8 @@ def dashboard_html() -> str:
       --shadow-status-pulse-high: 0 0 0 5px rgba(37, 99, 235, 0.2);
       --shadow-neutral-dot: 0 0 0 3px rgba(148, 163, 184, 0.12);
       --shadow-green-dot: 0 0 0 3px rgba(16, 185, 129, 0.12);
+      --shadow-amber-dot: 0 0 0 3px rgba(234, 179, 8, 0.16);
+      --shadow-waiting-dot: 0 0 0 3px rgba(124, 58, 237, 0.14);
       --shadow-red-dot: 0 0 0 3px rgba(194, 65, 58, 0.12);
       --gradient-arrow-flow: linear-gradient(90deg, rgba(37, 99, 235, 0.12), rgba(37, 99, 235, 0.75), rgba(37, 99, 235, 0.12));
 
@@ -1215,9 +1235,13 @@ def dashboard_html() -> str:
         --color-green-soft: #11271f;
         --color-green-subtle: #12261e;
         --color-amber: #f0b85a;
-        --color-amber-dot: #d99a2b;
+        --color-amber-dot: #facc15;
         --color-amber-line: #8f6a2a;
         --color-amber-soft: #2b2413;
+        --color-waiting: #c4b5fd;
+        --color-waiting-dot: #a78bfa;
+        --color-waiting-line: #6d5aa6;
+        --color-waiting-soft: #211b33;
         --color-red: #ff8b82;
         --color-red-line: #8f4542;
         --color-red-line-soft: #a85450;
@@ -1242,6 +1266,8 @@ def dashboard_html() -> str:
         --shadow-status-pulse-high: 0 0 0 5px rgba(122, 162, 255, 0.28);
         --shadow-neutral-dot: 0 0 0 3px rgba(100, 116, 139, 0.2);
         --shadow-green-dot: 0 0 0 3px rgba(34, 200, 138, 0.18);
+        --shadow-amber-dot: 0 0 0 3px rgba(250, 204, 21, 0.22);
+        --shadow-waiting-dot: 0 0 0 3px rgba(167, 139, 250, 0.2);
         --shadow-red-dot: 0 0 0 3px rgba(255, 139, 130, 0.18);
         --gradient-arrow-flow: linear-gradient(90deg, rgba(122, 162, 255, 0.16), rgba(122, 162, 255, 0.78), rgba(122, 162, 255, 0.16));
       }
@@ -1276,9 +1302,13 @@ def dashboard_html() -> str:
       --color-green-soft: #11271f;
       --color-green-subtle: #12261e;
       --color-amber: #f0b85a;
-      --color-amber-dot: #d99a2b;
+      --color-amber-dot: #facc15;
       --color-amber-line: #8f6a2a;
       --color-amber-soft: #2b2413;
+      --color-waiting: #c4b5fd;
+      --color-waiting-dot: #a78bfa;
+      --color-waiting-line: #6d5aa6;
+      --color-waiting-soft: #211b33;
       --color-red: #ff8b82;
       --color-red-line: #8f4542;
       --color-red-line-soft: #a85450;
@@ -1303,6 +1333,8 @@ def dashboard_html() -> str:
       --shadow-status-pulse-high: 0 0 0 5px rgba(122, 162, 255, 0.28);
       --shadow-neutral-dot: 0 0 0 3px rgba(100, 116, 139, 0.2);
       --shadow-green-dot: 0 0 0 3px rgba(34, 200, 138, 0.18);
+      --shadow-amber-dot: 0 0 0 3px rgba(250, 204, 21, 0.22);
+      --shadow-waiting-dot: 0 0 0 3px rgba(167, 139, 250, 0.2);
       --shadow-red-dot: 0 0 0 3px rgba(255, 139, 130, 0.18);
       --gradient-arrow-flow: linear-gradient(90deg, rgba(122, 162, 255, 0.16), rgba(122, 162, 255, 0.78), rgba(122, 162, 255, 0.16));
     }
@@ -1611,6 +1643,13 @@ def dashboard_html() -> str:
     .run-result.completed .run-result-title strong {
       color: var(--green);
     }
+    .run-result.warn {
+      border-color: var(--color-amber-line);
+      background: var(--color-amber-soft);
+    }
+    .run-result.warn .run-result-title strong {
+      color: var(--amber);
+    }
     .review-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1666,9 +1705,11 @@ def dashboard_html() -> str:
     .review-value.error {
       color: var(--red);
     }
-    .review-value.pass,
-    .review-value.warn {
+    .review-value.pass {
       color: var(--green);
+    }
+    .review-value.warn {
+      color: var(--amber);
     }
     .stage-lane {
       --stage-gap: clamp(32px, 3vw, 58px);
@@ -1718,6 +1759,7 @@ def dashboard_html() -> str:
     .node.last::after { display: none; }
     .node.active { border-color: var(--blue); box-shadow: var(--shadow-active); }
     .node.completed { border-color: var(--color-green-line-strong); }
+    .node.warn { border-color: var(--color-amber-line); }
     .node.running { border-color: var(--blue); }
     .node.error, .node.failed { border-color: var(--color-red-line-strong); }
     .node.pending { border-style: dashed; }
@@ -1807,6 +1849,8 @@ def dashboard_html() -> str:
       border-radius: 8px;
       padding: 10px;
       background: var(--color-panel);
+      display: flex;
+      flex-direction: column;
     }
     .phase-card.active { border-color: var(--blue); box-shadow: var(--shadow-active-soft); }
     .phase-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
@@ -1842,6 +1886,10 @@ def dashboard_html() -> str:
       bottom: 8px;
       margin: 0;
     }
+    .phase-card .badge {
+      margin-top: auto;
+      padding-top: 10px;
+    }
     .badge::before {
       content: "";
       width: 7px;
@@ -1855,6 +1903,11 @@ def dashboard_html() -> str:
     .badge.completed::before {
       background: var(--color-green-dot);
       box-shadow: var(--shadow-green-dot);
+    }
+    .badge.warn { color: var(--amber); }
+    .badge.warn::before {
+      background: var(--color-amber-dot);
+      box-shadow: var(--shadow-amber-dot);
     }
     .badge.running { color: var(--blue); }
     .badge.running::before {
@@ -1933,7 +1986,7 @@ def dashboard_html() -> str:
     }
     .history-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 8px;
     }
     .overview-layout {
@@ -2003,7 +2056,8 @@ def dashboard_html() -> str:
     }
     .overview-fill.active { background: var(--blue); }
     .overview-fill.completed { background: var(--green); }
-    .overview-fill.waiting { background: var(--color-amber-dot); }
+    .overview-fill.warn { background: var(--color-amber-dot); }
+    .overview-fill.waiting { background: var(--color-waiting-dot); }
     .overview-fill.error { background: var(--red); }
     .overview-fill.other { background: var(--color-neutral-dot); }
     .overview-status-value {
@@ -2028,7 +2082,8 @@ def dashboard_html() -> str:
     }
     .overview-dot.active { background: var(--blue); }
     .overview-dot.completed { background: var(--green); }
-    .overview-dot.waiting { background: var(--color-amber-dot); }
+    .overview-dot.warn { background: var(--color-amber-dot); }
+    .overview-dot.waiting { background: var(--color-waiting-dot); }
     .overview-dot.error { background: var(--red); }
     .overview-dot.other { background: var(--color-neutral-dot); }
     .history-stat {
@@ -2057,6 +2112,14 @@ def dashboard_html() -> str:
     .history-stat.danger.selected {
       border-color: var(--color-red-line-soft);
       background: var(--color-red-subtle);
+    }
+    .history-stat.warning.selected {
+      border-color: var(--color-amber-line);
+      background: var(--color-amber-soft);
+    }
+    .history-stat.waiting.selected {
+      border-color: var(--color-waiting-line);
+      background: var(--color-waiting-soft);
     }
     .history-stat:disabled {
       cursor: default;
@@ -2087,6 +2150,12 @@ def dashboard_html() -> str:
     }
     .history-stat.danger .history-action {
       color: var(--red);
+    }
+    .history-stat.warning .history-action {
+      color: var(--amber);
+    }
+    .history-stat.waiting .history-action {
+      color: var(--color-waiting);
     }
     .history-stat:disabled .history-action {
       color: var(--muted);
@@ -2130,6 +2199,16 @@ def dashboard_html() -> str:
       border-color: var(--color-red-line-soft);
       background: var(--color-red-subtle);
       color: var(--red);
+    }
+    .recent-filter.warning.selected {
+      border-color: var(--color-amber-line);
+      background: var(--color-amber-soft);
+      color: var(--amber);
+    }
+    .recent-filter.waiting.selected {
+      border-color: var(--color-waiting-line);
+      background: var(--color-waiting-soft);
+      color: var(--color-waiting);
     }
     .run-detail {
       margin-top: 3px;
@@ -2192,6 +2271,16 @@ def dashboard_html() -> str:
       border-color: var(--color-red-line-soft);
       background: var(--color-red-subtle);
     }
+    .history-detail-item.warning:hover,
+    .history-detail-item.warning.selected {
+      border-color: var(--color-amber-line);
+      background: var(--color-amber-soft);
+    }
+    .history-detail-item.waiting:hover,
+    .history-detail-item.waiting.selected {
+      border-color: var(--color-waiting-line);
+      background: var(--color-waiting-soft);
+    }
     .history-detail-main {
       min-width: 0;
       display: grid;
@@ -2203,6 +2292,12 @@ def dashboard_html() -> str:
     }
     .history-detail-item.danger .history-detail-main code {
       color: var(--red);
+    }
+    .history-detail-item.warning .history-detail-main code {
+      color: var(--amber);
+    }
+    .history-detail-item.waiting .history-detail-main code {
+      color: var(--color-waiting);
     }
     .history-detail-main span {
       color: var(--muted);
@@ -2397,7 +2492,9 @@ def dashboard_html() -> str:
     const HISTORY_FILTER_LABELS = {
       all: "history.all",
       running: "history.running",
+      waiting: "history.waiting",
       resumable: "history.resumable",
+      warn: "history.warn",
       failed: "history.failed"
     };
     const THEME_STORAGE_KEY = "phaseharness-dashboard-theme";
@@ -2443,7 +2540,7 @@ def dashboard_html() -> str:
         "status.fail": "fail",
         "status.pass": "pass",
         "status.warn": "warn",
-        "status.waiting_user": "waiting",
+        "status.waiting_user": "waiting for user",
         "status.committed": "committed",
         "status.no_changes": "no changes",
         "status.skipped": "skipped",
@@ -2487,7 +2584,9 @@ def dashboard_html() -> str:
         "metric.evaluation": "Evaluation",
         "history.all": "All runs",
         "history.running": "Running now",
+        "history.waiting": "Waiting for user",
         "history.resumable": "Can continue",
+        "history.warn": "Warn",
         "history.failed": "Failed",
         "history.showing": "Showing in Runs",
         "history.viewList": "View list",
@@ -2499,7 +2598,8 @@ def dashboard_html() -> str:
         "overview.total": "total",
         "overview.error": "Failed",
         "overview.active": "Running",
-        "overview.waiting": "Waiting",
+        "overview.waiting": "Waiting for user",
+        "overview.warn": "Warn",
         "overview.completed": "Completed",
         "overview.other": "Other",
         "output.kind": "Kind",
@@ -2537,7 +2637,9 @@ def dashboard_html() -> str:
         "runs.resume": "Resume",
         "filter.all": "All",
         "filter.running": "Running",
+        "filter.waiting": "Waiting",
         "filter.resumable": "Can continue",
+        "filter.warn": "Warn",
         "filter.failed": "Failed"
       },
       ko: {
@@ -2570,7 +2672,7 @@ def dashboard_html() -> str:
         "status.fail": "실패",
         "status.pass": "통과",
         "status.warn": "주의",
-        "status.waiting_user": "대기 중",
+        "status.waiting_user": "사용자 대기",
         "status.committed": "커밋됨",
         "status.no_changes": "변경 없음",
         "status.skipped": "건너뜀",
@@ -2614,7 +2716,9 @@ def dashboard_html() -> str:
         "metric.evaluation": "평가",
         "history.all": "전체 run",
         "history.running": "진행 중",
+        "history.waiting": "사용자 대기",
         "history.resumable": "재개 가능",
+        "history.warn": "주의",
         "history.failed": "실패",
         "history.showing": "Runs에 표시 중",
         "history.viewList": "목록 보기",
@@ -2626,7 +2730,8 @@ def dashboard_html() -> str:
         "overview.total": "전체",
         "overview.error": "실패",
         "overview.active": "진행 중",
-        "overview.waiting": "대기",
+        "overview.waiting": "사용자 대기",
+        "overview.warn": "주의",
         "overview.completed": "완료",
         "overview.other": "기타",
         "output.kind": "종류",
@@ -2664,7 +2769,9 @@ def dashboard_html() -> str:
         "runs.resume": "재개",
         "filter.all": "전체",
         "filter.running": "진행 중",
+        "filter.waiting": "사용자 대기",
         "filter.resumable": "재개 가능",
+        "filter.warn": "주의",
         "filter.failed": "실패"
       }
     };
@@ -2812,7 +2919,8 @@ def dashboard_html() -> str:
     function cls(status) {
       const value = text(status, "pending").toLowerCase();
       if (["active", "running"].includes(value)) return "running";
-      if (["completed", "pass", "warn", "committed", "no_changes", "skipped"].includes(value)) return "completed";
+      if (value === "warn") return "warn";
+      if (["completed", "pass", "committed", "no_changes", "skipped"].includes(value)) return "completed";
       if (["error", "failed", "fail"].includes(value)) return "error";
       return "pending";
     }
@@ -2871,7 +2979,7 @@ def dashboard_html() -> str:
       return parts.join(" ");
     }
     function terminalStatus(status) {
-      return ["completed", "error"].includes(text(status, "").toLowerCase());
+      return ["completed", "warn", "error", "failed", "fail", "committed", "no_changes", "skipped"].includes(text(status, "").toLowerCase());
     }
     function stageTiming(stage) {
       return stage?.timing || {};
@@ -2939,7 +3047,7 @@ def dashboard_html() -> str:
     }
     function canResumeRun(run) {
       const status = text(run?.status, "").toLowerCase();
-      return Boolean(run?.run_id) && !["completed", "error"].includes(status);
+      return Boolean(run?.run_id) && !["completed", "warn", "error", "failed", "fail", "committed", "no_changes", "skipped"].includes(status);
     }
     function resumeRequest(runId) {
       return `Use phaseharness to resume run ${runId}.`;
@@ -3117,7 +3225,8 @@ def dashboard_html() -> str:
       }
       if (status === "completed") {
         const evaluation = summary.evaluation_status ? `${t("result.evaluation")} ${displayStatus(summary.evaluation_status)}` : t("result.runCompleted");
-        return `<div class="run-result completed"><div class="run-result-title"><strong>${escapeHtml(t("result.completed"))}</strong><span>${escapeHtml(evaluation)}</span></div></div>`;
+        const tone = text(summary.evaluation_status, "").toLowerCase() === "warn" ? "warn" : "completed";
+        return `<div class="run-result ${tone}"><div class="run-result-title"><strong>${escapeHtml(t("result.completed"))}</strong><span>${escapeHtml(evaluation)}</span></div></div>`;
       }
       return "";
     }
@@ -3155,8 +3264,10 @@ def dashboard_html() -> str:
       const count = Number(value || 0);
       const selected = historyFilter === key ? " selected" : "";
       const danger = options.danger ? " danger" : "";
+      const waiting = options.waiting ? " waiting" : "";
+      const warning = options.warning ? " warning" : "";
       const action = count ? (selected ? t("history.showing") : t("history.viewList")) : t("history.noRuns");
-      return `<button type="button" class="history-stat clickable${selected}${danger}" onclick="selectHistoryFilter('${escapeHtml(key)}', true)" ${count ? "" : "disabled"}>
+      return `<button type="button" class="history-stat clickable${selected}${danger}${waiting}${warning}" onclick="selectHistoryFilter('${escapeHtml(key)}', true)" ${count ? "" : "disabled"}>
         <div class="history-label">${escapeHtml(label)}</div>
         <div class="history-value">${escapeHtml(count)}</div>
         <div class="history-action">${escapeHtml(action)}</div>
@@ -3203,7 +3314,9 @@ def dashboard_html() -> str:
       const totals = {
         all: history.total || 0,
         running: history.status?.active || 0,
+        waiting: history.status?.waiting_user || 0,
         resumable: history.resumable || 0,
+        warn: history.status?.warn || 0,
         failed: history.status?.error || 0
       };
       const total = totals[historyFilter] || items.length;
@@ -3211,7 +3324,7 @@ def dashboard_html() -> str:
       const visibleItems = items.slice(0, visibleCount);
       const suffix = `${visibleCount}/${total}`;
       const hiddenCount = Math.max(0, Math.min(total, items.length) - visibleCount);
-      const tone = historyFilter === "failed" ? " danger" : "";
+      const tone = historyFilter === "failed" ? " danger" : historyFilter === "warn" ? " warning" : historyFilter === "waiting" ? " waiting" : "";
       return `<div class="history-detail">
         <div class="history-detail-head"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(suffix)}</span></div>
         ${items.length
@@ -3230,6 +3343,7 @@ def dashboard_html() -> str:
         ["error", t("overview.error"), Number(status.error || 0)],
         ["active", t("overview.active"), Number(status.active || 0)],
         ["waiting", t("overview.waiting"), Number(status.waiting_user || 0)],
+        ["warn", t("overview.warn"), Number(status.warn || 0)],
         ["completed", t("overview.completed"), Number(status.completed || 0)],
         ["other", t("overview.other"), Number(status.other || 0)]
       ];
@@ -3261,7 +3375,9 @@ def dashboard_html() -> str:
           <div class="history-grid">
             ${historyCard("all", t("history.all"), history.total)}
             ${historyCard("running", t("history.running"), activeTotal)}
+            ${historyCard("waiting", t("history.waiting"), status.waiting_user || 0, { waiting: true })}
             ${historyCard("resumable", t("history.resumable"), history.resumable || 0)}
+            ${historyCard("warn", t("history.warn"), status.warn || 0, { warning: true })}
             ${historyCard("failed", t("history.failed"), status.error || 0, { danger: true })}
           </div>
         </div>`;
@@ -3329,7 +3445,9 @@ def dashboard_html() -> str:
     function historyFilterButton(key, label, count, options = {}) {
       const selected = historyFilter === key ? " selected" : "";
       const danger = options.danger ? " danger" : "";
-      return `<button type="button" class="recent-filter${selected}${danger}" onclick="selectHistoryFilter('${escapeHtml(key)}')">${escapeHtml(label)} ${escapeHtml(count)}</button>`;
+      const waiting = options.waiting ? " waiting" : "";
+      const warning = options.warning ? " warning" : "";
+      return `<button type="button" class="recent-filter${selected}${danger}${waiting}${warning}" onclick="selectHistoryFilter('${escapeHtml(key)}')">${escapeHtml(label)} ${escapeHtml(count)}</button>`;
     }
     function renderRecent(payload) {
       const history = payload.history || {};
@@ -3346,7 +3464,9 @@ def dashboard_html() -> str:
       const totals = {
         all: history.total || 0,
         running: status.active || 0,
+        waiting: status.waiting_user || 0,
         resumable: history.resumable || 0,
+        warn: status.warn || 0,
         failed: status.error || 0
       };
       const visibleCount = Math.min(historyVisibleCounts[filter] || HISTORY_INITIAL_VISIBLE, runs.length);
@@ -3355,7 +3475,9 @@ def dashboard_html() -> str:
       const controls = `<div class="recent-filter-row">
         ${historyFilterButton("all", t("filter.all"), totals.all)}
         ${historyFilterButton("running", t("filter.running"), totals.running)}
+        ${historyFilterButton("waiting", t("filter.waiting"), totals.waiting, { waiting: true })}
         ${historyFilterButton("resumable", t("filter.resumable"), totals.resumable)}
+        ${historyFilterButton("warn", t("filter.warn"), totals.warn, { warning: true })}
         ${historyFilterButton("failed", t("filter.failed"), totals.failed, { danger: true })}
       </div>`;
       const table = visibleRuns.length

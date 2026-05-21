@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "active_run": null,
-  "activation_source": null,
-  "mode": null,
-  "status": "inactive",
-  "provider": null,
-  "session_id": null,
-  "bound_at": null,
-  "bound_source": null,
-  "worktree_root": null
+  "active_run": "mock-dashboard-demo",
+  "activation_source": "dashboard_mock",
+  "mode": "auto",
+  "status": "active",
+  "provider": "codex",
+  "session_id": "mock-session",
+  "bound_at": "2026-05-18T10:45:00+09:00",
+  "bound_source": "mock",
+  "worktree_root": "/Users/kwonsoonmin/Documents/opensource/phaseharness"
 }
