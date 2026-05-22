@@ -62,11 +62,21 @@ npx phaseharness@latest add claude
 pnpm dlx phaseharness@latest add claude
 ```
 
+To update an existing install to the latest published package payload:
+
+```bash
+npx phaseharness@latest init -y --force
+# or
+pnpm dlx phaseharness@latest init -y --force
+```
+
 To manually sync generated skill copies:
 
 ```bash
 npx phaseharness@latest sync
 ```
+
+`sync` does not download or replace the core `.phaseharness` payload. It only reconciles enabled agent hooks and generated skill copies from the installed `.phaseharness/skills` source.
 
 If a generated agent skill copy was edited directly, sync reports a conflict and does not overwrite it by default. To overwrite generated copies intentionally:
 

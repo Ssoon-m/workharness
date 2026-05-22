@@ -9,7 +9,7 @@ def payload() -> dict[str, object]:
     return {
         "schema_version": 1,
         "status": "npm_managed",
-        "message": "PhaseHarness template updates are managed by the npm CLI. Use npx phaseharness@latest init --force or npx phaseharness@latest sync.",
+        "message": "PhaseHarness template updates are managed by the npm CLI. Use npx phaseharness@latest init -y --force.",
     }
 
 

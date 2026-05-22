@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "0.1.0",
+  "version": "0.1.4",
   "revision": "local",
   "managed_files": {
     ".phaseharness/.gitignore": "sha256:ad285b175bdc541436ccd201548fa3535f0a3f249f24980121b38c47af574ff9",
@@ -8,7 +8,7 @@
     ".phaseharness/bin/phaseharness-hook.py": "sha256:845a4f0fedbb54954fd57c2e62acdf1d567e68468844983e636aac9750126da6",
     ".phaseharness/bin/phaseharness-state.py": "sha256:864b2e4b79bb7646ce50cb2b255a874d4842ea5af692a3c84e42947840efbf88",
     ".phaseharness/bin/phaseharness-sync-bridges.py": "sha256:c02512a7340d1ac7e01abe85e129d1cbffc2a500a5709389971dfe4812665f03",
-    ".phaseharness/bin/phaseharness-update.py": "sha256:6fb4b96fa16e84453f12e2c2c9135e07163856d62a1e58f49db63f89e3e0821f",
+    ".phaseharness/bin/phaseharness-update.py": "sha256:15b8df5f0f41376a47f757d09f1550c2323da9545aab82fe7fc4cc20651a251e",
     ".phaseharness/bin/phaseharness-worktree.py": "sha256:13098d7b80789792caf78e312a0634ef220a63ac23ff62aa00d5ca9c8f63cb4e",
     ".phaseharness/context.example.json": "sha256:1d7fb2781b4ef67fcaf4a28d60bd1ed6c79481e6df4804c45f3cdc61231caf69",
     ".phaseharness/context.schema.json": "sha256:ee9f587d2ea0fd9ebfac4ce591a7f8294b800e9138586207443730e698cf87c6",

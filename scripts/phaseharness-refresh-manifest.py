@@ -38,7 +38,7 @@ def find_project_root(start: Path | None = None) -> Path:
 
 def load_manifest(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {"schema_version": 1, "version": "0.1.0", "revision": "local", "managed_files": {}}
+        return {"schema_version": 1, "version": "0.1.4", "revision": "local", "managed_files": {}}
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise RuntimeError(f"manifest must be a JSON object: {path}")
@@ -99,7 +99,7 @@ def build_manifest(root: Path, *, staged: bool, version: str | None, revision: s
     manifest_path = root / MANIFEST_PATH
     manifest = load_manifest(manifest_path)
     manifest["schema_version"] = manifest.get("schema_version", 1)
-    manifest["version"] = version if version is not None else manifest.get("version", "0.1.0")
+    manifest["version"] = version if version is not None else manifest.get("version", "0.1.4")
     manifest["revision"] = revision if revision is not None else manifest.get("revision", "local")
     manifest["managed_files"] = staged_files(root) if staged else working_tree_files(root)
     return manifest

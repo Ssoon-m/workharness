@@ -1,4 +1,5 @@
 import { checkbox } from "@inquirer/prompts";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   AGENTS,
@@ -23,7 +24,11 @@ export function registerInit(program, context) {
     .action(async (options) => {
       const root = requireGitRoot();
       requirePython();
-      const existing = readJson(resolve(root, ".phaseharness/install.json"), {});
+      const installPath = resolve(root, ".phaseharness/install.json");
+      const existing = readJson(installPath, {});
+      if (existsSync(resolve(root, ".phaseharness/manifest.json")) && !existsSync(installPath) && !options.force) {
+        throw new Error("Existing .phaseharness payload found. Re-run with --force to migrate it to the npm-managed installer.");
+      }
       let agents = parseAgents(options.agents);
       if (!agents) {
         if (options.yes) {
@@ -43,8 +48,9 @@ export function registerInit(program, context) {
       }
       installTemplate({ packageRoot: context.packageRoot, targetRoot: root, force: Boolean(options.force) });
       ensureRuntimeState(root);
-      const install = buildInstallManifest({ packageVersion: context.packageVersion, agents, existing });
-      writeJson(resolve(root, ".phaseharness/install.json"), install);
+      const packageVersion = options.force || !existing.package_version ? context.packageVersion : existing.package_version;
+      const install = buildInstallManifest({ packageVersion, agents, existing });
+      writeJson(installPath, install);
       for (const agent of agents) {
         const args = ["install", "--provider", agent];
         if (options.force) args.push("--force");

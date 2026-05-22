@@ -62,11 +62,21 @@ npx phaseharness@latest add claude
 pnpm dlx phaseharness@latest add claude
 ```
 
+기존 설치를 최신 npm package payload로 갱신하려면:
+
+```bash
+npx phaseharness@latest init -y --force
+# 또는
+pnpm dlx phaseharness@latest init -y --force
+```
+
 수동으로 skill 복사본을 동기화하려면:
 
 ```bash
 npx phaseharness@latest sync
 ```
+
+`sync`는 core `.phaseharness` payload를 내려받거나 교체하지 않습니다. 설치된 `.phaseharness/skills` 원본에서 선택된 agent hook과 generated skill 복사본만 reconcile합니다.
 
 agent 쪽 generated skill 복사본을 직접 수정한 흔적이 있으면 기본 sync는 conflict를 보고하고 덮어쓰지 않습니다. 의도적으로 덮어쓰려면:
 

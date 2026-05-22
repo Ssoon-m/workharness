@@ -26,6 +26,15 @@ npx phaseharness@latest add claude
 pnpm dlx phaseharness@latest add claude
 ```
 
+Update an existing install to the latest published package payload:
+
+```bash
+npx phaseharness@latest init -y --force
+pnpm dlx phaseharness@latest init -y --force
+```
+
+`sync` only reconciles enabled agent hooks and generated skill copies from the installed `.phaseharness/skills` source.
+
 Run health checks:
 
 ```bash

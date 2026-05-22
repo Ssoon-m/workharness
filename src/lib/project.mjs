@@ -1,5 +1,16 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 export const AGENTS = ["codex", "claude"];
@@ -158,6 +169,7 @@ export function runBridge(root, args, { stdio = "inherit" } = {}) {
 export function installTemplate({ packageRoot, targetRoot, force }) {
   const source = resolve(packageRoot, "templates/core");
   copyDirectory(source, targetRoot, { force });
+  normalizeTemplateGitignore(targetRoot);
   for (const file of [
     ".phaseharness/bin/phaseharness-bridge.py",
     ".phaseharness/bin/phaseharness-sync-bridges.py",
@@ -172,4 +184,15 @@ export function installTemplate({ packageRoot, targetRoot, force }) {
   ]) {
     ensureExecutable(resolve(targetRoot, file));
   }
+}
+
+function normalizeTemplateGitignore(targetRoot) {
+  const npmIgnore = resolve(targetRoot, ".phaseharness/.npmignore");
+  const gitIgnore = resolve(targetRoot, ".phaseharness/.gitignore");
+  if (!existsSync(npmIgnore)) return;
+  if (!existsSync(gitIgnore)) {
+    renameSync(npmIgnore, gitIgnore);
+    return;
+  }
+  rmSync(npmIgnore);
 }
