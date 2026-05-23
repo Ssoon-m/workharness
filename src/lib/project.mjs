@@ -189,7 +189,6 @@ export function installTemplate({ packageRoot, targetRoot, force }) {
     ".phaseharness/bin/phaseharness-sync-bridges.py",
     ".phaseharness/bin/phaseharness-state.py",
     ".phaseharness/bin/phaseharness-hook.py",
-    ".phaseharness/bin/phaseharness-update.py",
     ".phaseharness/bin/phaseharness-worktree.py",
     ".phaseharness/hooks/codex-session-start.sh",
     ".phaseharness/hooks/codex-stop.sh",
