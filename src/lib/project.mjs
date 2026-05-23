@@ -18,6 +18,12 @@ export const DEFAULT_SKILL_TARGETS = {
   codex: [".codex/skills"],
   claude: [".claude/skills"]
 };
+export const PACKAGE_SCRIPTS = {
+  "phaseharness:dashboard": "npx phaseharness@latest dashboard",
+  "phaseharness:sync": "npx phaseharness@latest sync",
+  "phaseharness:doctor": "npx phaseharness@latest doctor",
+  "phaseharness:upgrade": "npx phaseharness@latest upgrade"
+};
 
 export function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -100,6 +106,32 @@ export function readJson(path, fallback = {}) {
 export function writeJson(path, value) {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+export function ensurePackageScripts(root) {
+  const packageJsonPath = resolve(root, "package.json");
+  if (!existsSync(packageJsonPath)) {
+    return { status: "missing", changed: [] };
+  }
+  const pkg = readJson(packageJsonPath, null);
+  if (!pkg || typeof pkg !== "object" || Array.isArray(pkg)) {
+    throw new Error("package.json must contain a JSON object.");
+  }
+  if (!pkg.scripts || typeof pkg.scripts !== "object" || Array.isArray(pkg.scripts)) {
+    pkg.scripts = {};
+  }
+  const changed = [];
+  for (const [name, command] of Object.entries(PACKAGE_SCRIPTS)) {
+    if (Object.hasOwn(pkg.scripts, name)) {
+      continue;
+    }
+    pkg.scripts[name] = command;
+    changed.push(name);
+  }
+  if (changed.length) {
+    writeJson(packageJsonPath, pkg);
+  }
+  return { status: "ok", changed };
 }
 
 export function copyDirectory(source, target, { force = false } = {}) {
@@ -187,6 +219,11 @@ export function buildInstallManifest({ packageVersion, agents, existing = {} }) 
     next.agents[agent].enabled = true;
   }
   return next;
+}
+
+export function enabledAgents(install) {
+  if (!install.agents || typeof install.agents !== "object") return [];
+  return AGENTS.filter((agent) => install.agents[agent]?.enabled);
 }
 
 export function runBridge(root, args, { stdio = "inherit" } = {}) {

@@ -15,16 +15,17 @@ The harness keeps durable run state under `.phaseharness/runs/<run-id>/`, record
 Run PhaseHarness from the directory where you want to install it:
 
 ```bash
-npx phaseharness@latest init
+npm create phaseharness@latest
 ```
 
-For pnpm users, the equivalent command is:
+For pnpm or yarn users, the equivalent commands are:
 
 ```bash
-pnpm dlx phaseharness@latest init
+pnpm create phaseharness@latest
+yarn create phaseharness
 ```
 
-The installer checks that the current directory is inside a git repository and that `python3` is available. In a monorepo, run `init` from the package or app directory you want PhaseHarness to manage. It then asks which agents to integrate with:
+The installer checks that the current directory is inside a git repository and that `python3` is available. In a monorepo, run the create command from the package or app directory you want PhaseHarness to manage. It then asks which agents to integrate with:
 
 ```text
 [x] Codex
@@ -34,9 +35,9 @@ The installer checks that the current directory is inside a git repository and t
 You can also skip prompts:
 
 ```bash
-npx phaseharness@latest init --agents codex,claude
+npm create phaseharness@latest -- --agents codex,claude
 # or
-pnpm dlx phaseharness@latest init --agents codex,claude
+pnpm create phaseharness@latest -- --agents codex,claude
 ```
 
 ## Agent Integrations
@@ -65,12 +66,12 @@ pnpm dlx phaseharness@latest add claude
 To update an existing install to the latest published package payload:
 
 ```bash
-npx phaseharness@latest init -y --force
+npx phaseharness@latest upgrade
 # or
-pnpm dlx phaseharness@latest init -y --force
+pnpm dlx phaseharness@latest upgrade
 ```
 
-Before replacing `.phaseharness/skills`, `init --force` backs up the current skill source to `.phaseharness/backups/skills-<timestamp>/`.
+Before replacing `.phaseharness/skills`, `upgrade` backs up the current skill source to `.phaseharness/backups/skills-<timestamp>/`.
 
 To manually sync generated skill copies:
 
@@ -79,6 +80,19 @@ npx phaseharness@latest sync
 ```
 
 `sync` does not download or replace the core `.phaseharness` payload. It overwrites enabled agent hooks and generated skill copies from the installed `.phaseharness/skills` source.
+
+If the target directory has `package.json`, `init` and `upgrade` add missing PhaseHarness scripts without overwriting existing script names:
+
+```json
+{
+  "scripts": {
+    "phaseharness:dashboard": "npx phaseharness@latest dashboard",
+    "phaseharness:sync": "npx phaseharness@latest sync",
+    "phaseharness:doctor": "npx phaseharness@latest doctor",
+    "phaseharness:upgrade": "npx phaseharness@latest upgrade"
+  }
+}
+```
 
 ## Quick Start
 
@@ -106,6 +120,8 @@ Ask the agent:
 
 ```bash
 npx phaseharness@latest dashboard
+# or from package.json scripts
+pnpm run phaseharness:dashboard
 # or choose a port
 npx phaseharness@latest dashboard -p 6006
 ```
@@ -134,6 +150,7 @@ Then edit `.phaseharness/context.json`:
 
 ```bash
 phaseharness init
+phaseharness upgrade
 phaseharness add codex
 phaseharness add claude
 phaseharness sync

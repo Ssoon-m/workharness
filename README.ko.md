@@ -15,16 +15,17 @@ clarify -> context-gather -> plan -> generate -> evaluate
 PhaseHarness를 설치할 디렉터리에서 실행하세요.
 
 ```bash
-npx phaseharness@latest init
+npm create phaseharness@latest
 ```
 
-pnpm 사용자는 아래처럼 실행할 수 있습니다.
+pnpm 또는 yarn 사용자는 아래처럼 실행할 수 있습니다.
 
 ```bash
-pnpm dlx phaseharness@latest init
+pnpm create phaseharness@latest
+yarn create phaseharness
 ```
 
-installer는 현재 디렉터리가 git 저장소 안인지, `python3`를 사용할 수 있는지 확인합니다. 모노레포에서는 PhaseHarness가 관리할 package/app 디렉터리에서 `init`을 실행하세요. 그다음 어떤 agent와 연결할지 물어봅니다.
+installer는 현재 디렉터리가 git 저장소 안인지, `python3`를 사용할 수 있는지 확인합니다. 모노레포에서는 PhaseHarness가 관리할 package/app 디렉터리에서 create 명령을 실행하세요. 그다음 어떤 agent와 연결할지 물어봅니다.
 
 ```text
 [x] Codex
@@ -34,9 +35,9 @@ installer는 현재 디렉터리가 git 저장소 안인지, `python3`를 사용
 프롬프트 없이 설치하려면:
 
 ```bash
-npx phaseharness@latest init --agents codex,claude
+npm create phaseharness@latest -- --agents codex,claude
 # 또는
-pnpm dlx phaseharness@latest init --agents codex,claude
+pnpm create phaseharness@latest -- --agents codex,claude
 ```
 
 ## Agent 통합
@@ -65,12 +66,12 @@ pnpm dlx phaseharness@latest add claude
 기존 설치를 최신 npm package payload로 갱신하려면:
 
 ```bash
-npx phaseharness@latest init -y --force
+npx phaseharness@latest upgrade
 # 또는
-pnpm dlx phaseharness@latest init -y --force
+pnpm dlx phaseharness@latest upgrade
 ```
 
-`init --force`는 `.phaseharness/skills`를 교체하기 전에 현재 skill 원본을 `.phaseharness/backups/skills-<timestamp>/`에 백업합니다.
+`upgrade`는 `.phaseharness/skills`를 교체하기 전에 현재 skill 원본을 `.phaseharness/backups/skills-<timestamp>/`에 백업합니다.
 
 수동으로 skill 복사본을 동기화하려면:
 
@@ -79,6 +80,19 @@ npx phaseharness@latest sync
 ```
 
 `sync`는 core `.phaseharness` payload를 내려받거나 교체하지 않습니다. 설치된 `.phaseharness/skills` 원본에서 선택된 agent hook과 generated skill 복사본을 덮어씁니다.
+
+설치 대상 디렉터리에 `package.json`이 있으면 `init`과 `upgrade`가 PhaseHarness script를 자동으로 추가합니다. 이미 같은 이름의 script가 있으면 덮어쓰지 않습니다.
+
+```json
+{
+  "scripts": {
+    "phaseharness:dashboard": "npx phaseharness@latest dashboard",
+    "phaseharness:sync": "npx phaseharness@latest sync",
+    "phaseharness:doctor": "npx phaseharness@latest doctor",
+    "phaseharness:upgrade": "npx phaseharness@latest upgrade"
+  }
+}
+```
 
 ## 빠른 시작
 
@@ -106,6 +120,8 @@ commit mode: none
 
 ```bash
 npx phaseharness@latest dashboard
+# package.json scripts를 쓰려면
+pnpm run phaseharness:dashboard
 # 포트를 직접 지정하려면
 npx phaseharness@latest dashboard -p 6006
 ```
@@ -134,6 +150,7 @@ cp .phaseharness/context.example.json .phaseharness/context.json
 
 ```bash
 phaseharness init
+phaseharness upgrade
 phaseharness add codex
 phaseharness add claude
 phaseharness sync

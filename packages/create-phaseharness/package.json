@@ -1,0 +1,38 @@
+{
+  "name": "create-phaseharness",
+  "version": "0.1.5",
+  "description": "Create PhaseHarness installs in AI coding projects.",
+  "keywords": [
+    "phaseharness",
+    "cli",
+    "create",
+    "init",
+    "codex",
+    "claude"
+  ],
+  "homepage": "https://github.com/Ssoon-m/phaseharness/tree/main/packages/create-phaseharness#readme",
+  "bugs": {
+    "url": "https://github.com/Ssoon-m/phaseharness/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ssoon-m/phaseharness.git",
+    "directory": "packages/create-phaseharness"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "type": "module",
+  "bin": {
+    "create-phaseharness": "./index.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "README.md"
+  ],
+  "dependencies": {
+    "phaseharness": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "license": "MIT"
+}

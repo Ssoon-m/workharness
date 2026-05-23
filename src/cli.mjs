@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { registerInit } from "./commands/init.mjs";
+import { registerUpgrade } from "./commands/upgrade.mjs";
 import { registerAdd } from "./commands/add.mjs";
 import { registerSync } from "./commands/sync.mjs";
 import { registerDoctor } from "./commands/doctor.mjs";
@@ -21,6 +22,7 @@ program
   .version(pkg.version);
 
 registerInit(program, { packageRoot, packageVersion: pkg.version });
+registerUpgrade(program, { packageRoot, packageVersion: pkg.version });
 registerAdd(program, { packageRoot, packageVersion: pkg.version });
 registerSync(program);
 registerDoctor(program);

@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 import {
   AGENTS,
   buildInstallManifest,
+  enabledAgents,
+  ensurePackageScripts,
   ensureRuntimeState,
   installTemplate,
   parseAgents,
@@ -48,6 +50,7 @@ export function registerInit(program, context) {
       }
       const result = installTemplate({ packageRoot: context.packageRoot, targetRoot: root, force: Boolean(options.force) });
       ensureRuntimeState(root);
+      const packageScripts = ensurePackageScripts(root);
       const packageVersion = options.force || !existing.package_version ? context.packageVersion : existing.package_version;
       const install = buildInstallManifest({ packageVersion, agents, existing });
       writeJson(installPath, install);
@@ -58,11 +61,17 @@ export function registerInit(program, context) {
       if (result.skillsBackup) {
         console.log(`Existing PhaseHarness skills backed up to ${result.skillsBackup}.`);
       }
+      logPackageScripts(packageScripts);
       console.log(`PhaseHarness installed for ${agents.join(", ")}.`);
     });
 }
 
-function enabledAgents(install) {
-  if (!install.agents || typeof install.agents !== "object") return [];
-  return AGENTS.filter((agent) => install.agents[agent]?.enabled);
+function logPackageScripts(result) {
+  if (result.status === "missing") {
+    console.log("No package.json found; skipped package scripts.");
+    return;
+  }
+  if (result.changed.length) {
+    console.log(`Added package scripts: ${result.changed.join(", ")}.`);
+  }
 }
