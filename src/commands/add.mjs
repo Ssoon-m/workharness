@@ -15,8 +15,7 @@ export function registerAdd(program, context) {
     .command("add")
     .description("Add an agent integration to an existing PhaseHarness install")
     .argument("<agent>", "agent to add: codex or claude")
-    .option("--force", "overwrite managed generated skill copies")
-    .action((agent, options) => {
+    .action((agent) => {
       const selectedAgents = parseAgents(agent);
       if (!selectedAgents || selectedAgents.length !== 1) {
         throw new Error(`Unknown agent: ${agent}`);
@@ -36,7 +35,7 @@ export function registerAdd(program, context) {
         existing
       });
       writeJson(installPath, install);
-      runBridge(root, ["install", "--provider", selected, ...(options.force ? ["--force"] : [])]);
+      runBridge(root, ["install", "--provider", selected]);
       console.log(`PhaseHarness ${selected} integration is installed.`);
     });
 }

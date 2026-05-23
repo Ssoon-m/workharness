@@ -53,7 +53,6 @@ export function registerInit(program, context) {
       writeJson(installPath, install);
       for (const agent of agents) {
         const args = ["install", "--provider", agent];
-        if (options.force) args.push("--force");
         runBridge(root, args);
       }
       console.log(`PhaseHarness installed for ${agents.join(", ")}.`);

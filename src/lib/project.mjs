@@ -138,8 +138,7 @@ export function buildInstallManifest({ packageVersion, agents, existing = {} }) 
     },
     skill_sync: {
       mode: "copy",
-      source: ".phaseharness/skills",
-      managed_marker: ".phaseharness-managed.json"
+      source: ".phaseharness/skills"
     }
   };
   if (existing.agents && typeof existing.agents === "object") {
@@ -151,7 +150,9 @@ export function buildInstallManifest({ packageVersion, agents, existing = {} }) 
     }
   }
   if (existing.skill_sync && typeof existing.skill_sync === "object") {
-    next.skill_sync = { ...next.skill_sync, ...existing.skill_sync, mode: "copy" };
+    if (typeof existing.skill_sync.source === "string") {
+      next.skill_sync.source = existing.skill_sync.source;
+    }
   }
   for (const agent of agents) {
     next.agents[agent].enabled = true;

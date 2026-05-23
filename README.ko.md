@@ -52,7 +52,7 @@ pnpm dlx phaseharness@latest init --agents codex,claude
 - Codex: `.codex/config.toml`, `.codex/hooks.json`, `.codex/skills`
 - Claude: `.claude/settings.json`, `.claude/skills`
 
-`.phaseharness/skills`가 원본입니다. Codex/Claude 쪽 skill 디렉터리는 이 원본에서 복사된 generated bridge output입니다. symlink는 사용하지 않습니다.
+`.phaseharness/skills`가 원본입니다. Codex/Claude 쪽 skill 디렉터리는 이 원본에서 덮어써지는 generated bridge output입니다. symlink는 사용하지 않습니다.
 
 나중에 Claude를 추가하려면:
 
@@ -76,13 +76,7 @@ pnpm dlx phaseharness@latest init -y --force
 npx phaseharness@latest sync
 ```
 
-`sync`는 core `.phaseharness` payload를 내려받거나 교체하지 않습니다. 설치된 `.phaseharness/skills` 원본에서 선택된 agent hook과 generated skill 복사본만 reconcile합니다.
-
-agent 쪽 generated skill 복사본을 직접 수정한 흔적이 있으면 기본 sync는 conflict를 보고하고 덮어쓰지 않습니다. 의도적으로 덮어쓰려면:
-
-```bash
-npx phaseharness@latest sync --force
-```
+`sync`는 core `.phaseharness` payload를 내려받거나 교체하지 않습니다. 설치된 `.phaseharness/skills` 원본에서 선택된 agent hook과 generated skill 복사본을 덮어씁니다.
 
 ## 빠른 시작
 

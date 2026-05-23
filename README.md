@@ -52,7 +52,7 @@ The selected agent integrations are reconciled on SessionStart:
 - Codex: `.codex/config.toml`, `.codex/hooks.json`, `.codex/skills`
 - Claude: `.claude/settings.json`, `.claude/skills`
 
-`.phaseharness/skills` is the source of truth. Generated agent skill copies are updated from it by a provider-scoped SessionStart reconcile. Symlinks are not used.
+`.phaseharness/skills` is the source of truth. Generated agent skill copies are overwritten from it by a provider-scoped SessionStart reconcile. Symlinks are not used.
 
 To add another agent later:
 
@@ -76,13 +76,7 @@ To manually sync generated skill copies:
 npx phaseharness@latest sync
 ```
 
-`sync` does not download or replace the core `.phaseharness` payload. It only reconciles enabled agent hooks and generated skill copies from the installed `.phaseharness/skills` source.
-
-If a generated agent skill copy was edited directly, sync reports a conflict and does not overwrite it by default. To overwrite generated copies intentionally:
-
-```bash
-npx phaseharness@latest sync --force
-```
+`sync` does not download or replace the core `.phaseharness` payload. It overwrites enabled agent hooks and generated skill copies from the installed `.phaseharness/skills` source.
 
 ## Quick Start
 

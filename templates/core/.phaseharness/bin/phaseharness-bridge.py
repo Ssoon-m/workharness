@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import shutil
@@ -29,7 +28,6 @@ DEFAULT_SKILL_TARGETS = {
 }
 LEGACY_CODEX_SKILL_TARGETS = [".agents/skills"]
 INSTALL_PATH = Path(".phaseharness") / "install.json"
-MARKER_NAME = ".phaseharness-managed.json"
 HOOK_MARKER = ".phaseharness"
 
 
@@ -77,7 +75,6 @@ def default_install(package_version: str = "0.0.0") -> dict[str, Any]:
         "skill_sync": {
             "mode": "copy",
             "source": ".phaseharness/skills",
-            "managed_marker": MARKER_NAME,
         },
     }
 
@@ -95,11 +92,9 @@ def normalize_install(data: dict[str, Any]) -> dict[str, Any]:
             agents[agent] = normalize_agent_config(agent, agents[agent])
     sync = install["skill_sync"]
     existing_sync = data.get("skill_sync", {})
-    if isinstance(existing_sync, dict):
-        sync.update(existing_sync)
-    sync["mode"] = "copy"
+    if isinstance(existing_sync, dict) and isinstance(existing_sync.get("source"), str):
+        sync["source"] = existing_sync["source"]
     sync.setdefault("source", ".phaseharness/skills")
-    sync.setdefault("managed_marker", MARKER_NAME)
     return install
 
 
@@ -286,49 +281,15 @@ def discover_skill_dirs(root: Path, source_rel: str) -> list[Path]:
     return skill_dirs
 
 
-def tree_digest(path: Path, marker_name: str = MARKER_NAME) -> str:
-    digest = hashlib.sha256()
-    for item in sorted(path.rglob("*")):
-        if not item.is_file():
-            continue
-        if item.name == marker_name or "__pycache__" in item.parts or item.suffix == ".pyc":
-            continue
-        rel = item.relative_to(path).as_posix()
-        digest.update(rel.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(item.read_bytes())
-        digest.update(b"\0")
-    return f"sha256:{digest.hexdigest()}"
-
-
-def copy_skill(source: Path, target: Path, *, force: bool, marker_name: str) -> tuple[str, Path]:
-    source_digest = tree_digest(source, marker_name)
-    marker_path = target / marker_name
-    if target.exists() and not target.is_dir():
-        return "conflict", target
+def copy_skill(source: Path, target: Path) -> Path:
     if target.exists():
-        marker = load_json_object(marker_path)
-        previous_digest = marker.get("target_digest")
-        current_digest = tree_digest(target, marker_name)
-        if not force and previous_digest != current_digest:
-            return "conflict", target
-        if not force and current_digest == source_digest:
-            return "unchanged", target
-        shutil.rmtree(target)
+        if target.is_dir() and not target.is_symlink():
+            shutil.rmtree(target)
+        else:
+            target.unlink()
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, target)
-    write_json(
-        target / marker_name,
-        {
-            "schema_version": 1,
-            "managed_by": "phaseharness",
-            "source": source.relative_to(source.parents[2]).as_posix() if len(source.parents) > 2 else source.name,
-            "source_digest": source_digest,
-            "target_digest": tree_digest(target, marker_name),
-            "updated_at": now_iso(),
-        },
-    )
-    return "updated", target
+    return target
 
 
 def enabled_providers(install: dict[str, Any], provider: str) -> list[str]:
@@ -342,27 +303,22 @@ def enabled_providers(install: dict[str, Any], provider: str) -> list[str]:
     return selected
 
 
-def reconcile_provider(root: Path, install: dict[str, Any], provider: str, *, force: bool, install_hooks_enabled: bool) -> dict[str, Any]:
+def reconcile_provider(root: Path, install: dict[str, Any], provider: str, *, install_hooks_enabled: bool) -> dict[str, Any]:
     agent_config = install.get("agents", {}).get(provider, {})
     if not isinstance(agent_config, dict):
         agent_config = {}
     source_rel = str(install.get("skill_sync", {}).get("source") or ".phaseharness/skills")
-    marker_name = str(install.get("skill_sync", {}).get("managed_marker") or MARKER_NAME)
     targets = agent_config.get("skill_targets") or DEFAULT_SKILL_TARGETS[provider]
     if not isinstance(targets, list) or not all(isinstance(item, str) for item in targets):
         raise RuntimeError(f"invalid skill_targets for {provider}")
     changed: list[str] = []
-    conflicts: list[str] = []
     if install_hooks_enabled:
         changed.extend(str(path.relative_to(root)) for path in install_hooks(root, provider))
     for source in discover_skill_dirs(root, source_rel):
         for target_root in targets:
-            status, path = copy_skill(source, root / target_root / source.name, force=force, marker_name=marker_name)
-            if status == "conflict":
-                conflicts.append(str(path.relative_to(root)))
-            elif status == "updated":
-                changed.append(str(path.relative_to(root)))
-    return {"provider": provider, "changed": sorted(set(changed)), "conflicts": sorted(set(conflicts))}
+            path = copy_skill(source, root / target_root / source.name)
+            changed.append(str(path.relative_to(root)))
+    return {"provider": provider, "changed": sorted(set(changed))}
 
 
 def command_reconcile(args: argparse.Namespace) -> int:
@@ -371,13 +327,13 @@ def command_reconcile(args: argparse.Namespace) -> int:
     changed = [str(path.relative_to(root)) for path in ensure_state_files(root)]
     results = []
     for provider in enabled_providers(install, args.provider):
-        result = reconcile_provider(root, install, provider, force=args.force, install_hooks_enabled=args.install_hooks)
+        result = reconcile_provider(root, install, provider, install_hooks_enabled=args.install_hooks)
         changed.extend(result["changed"])
         results.append(result)
     output = {"changed": sorted(set(changed)), "results": results}
     if not args.quiet:
         print(json.dumps(output, indent=2, ensure_ascii=False))
-    return 1 if any(result["conflicts"] for result in results) else 0
+    return 0
 
 
 def command_install(args: argparse.Namespace) -> int:
@@ -390,10 +346,10 @@ def command_install(args: argparse.Namespace) -> int:
         config.setdefault("skill_targets", DEFAULT_SKILL_TARGETS[args.provider])
     write_json(root / INSTALL_PATH, install)
     ensure_state_files(root)
-    result = reconcile_provider(root, install, args.provider, force=args.force, install_hooks_enabled=True)
+    result = reconcile_provider(root, install, args.provider, install_hooks_enabled=True)
     if not args.quiet:
         print(json.dumps(result, indent=2, ensure_ascii=False))
-    return 1 if result["conflicts"] else 0
+    return 0
 
 
 def command_doctor(args: argparse.Namespace) -> int:
@@ -423,13 +379,11 @@ def main() -> int:
 
     install = sub.add_parser("install", help="enable and install one provider bridge")
     install.add_argument("--provider", choices=AGENTS, required=True)
-    install.add_argument("--force", action="store_true")
     install.add_argument("--quiet", action="store_true")
     install.set_defaults(func=command_install)
 
     reconcile = sub.add_parser("reconcile", help="sync selected provider bridges from install.json")
     reconcile.add_argument("--provider", choices=("all", *AGENTS), default="all")
-    reconcile.add_argument("--force", action="store_true")
     reconcile.add_argument("--install-hooks", action="store_true")
     reconcile.add_argument("--quiet", action="store_true")
     reconcile.set_defaults(func=command_reconcile)

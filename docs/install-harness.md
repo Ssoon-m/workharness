@@ -33,7 +33,7 @@ npx phaseharness@latest init -y --force
 pnpm dlx phaseharness@latest init -y --force
 ```
 
-`sync` only reconciles enabled agent hooks and generated skill copies from the installed `.phaseharness/skills` source.
+`sync` overwrites enabled agent hooks and generated skill copies from the installed `.phaseharness/skills` source. It does not download or replace the core `.phaseharness` payload.
 
 Run health checks:
 
