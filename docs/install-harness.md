@@ -49,3 +49,5 @@ npx phaseharness@latest dashboard
 npx phaseharness@latest dashboard -p 6006
 pnpm dlx phaseharness@latest dashboard
 ```
+
+By default the dashboard tries `http://127.0.0.1:4673/` and falls back to an available port if 4673 is busy.

@@ -27,7 +27,7 @@ export function registerInit(program, context) {
       const installPath = resolve(root, ".phaseharness/install.json");
       const existing = readJson(installPath, {});
       if (existsSync(resolve(root, ".phaseharness")) && !existsSync(installPath) && !options.force) {
-        throw new Error("Existing .phaseharness payload found. Re-run with --force to migrate it to the npm-managed installer.");
+        throw new Error("Existing .phaseharness payload found. Re-run with --force to overwrite it.");
       }
       let agents = parseAgents(options.agents);
       if (!agents) {

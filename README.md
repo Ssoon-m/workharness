@@ -108,6 +108,8 @@ npx phaseharness@latest dashboard
 npx phaseharness@latest dashboard -p 6006
 ```
 
+By default the dashboard tries `http://127.0.0.1:4673/` and falls back to an available port if 4673 is busy.
+
 The dashboard shows the current active run, stage progress, generated outputs, diagnostics, and run history.
 
 ## Project Guidance

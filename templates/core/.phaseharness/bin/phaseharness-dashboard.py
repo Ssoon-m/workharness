@@ -13,6 +13,7 @@ from urllib.parse import parse_qs, urlparse
 
 
 SCHEMA_VERSION = 1
+DEFAULT_PORT = 4673
 DEFAULT_STALE_THRESHOLD_SECONDS = 1800
 DEFAULT_RECENT_LIMIT = 10
 HISTORY_GROUP_PAYLOAD_LIMIT = 200
@@ -3594,10 +3595,32 @@ def make_handler(root: Path) -> type[BaseHTTPRequestHandler]:
     return DashboardHandler
 
 
+def parse_port(value: str) -> int:
+    try:
+        port = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("port must be an integer between 0 and 65535") from exc
+    if port < 0 or port > 65535:
+        raise argparse.ArgumentTypeError("port must be an integer between 0 and 65535")
+    return port
+
+
+def bind_server(root: Path, host: str, port: int, allow_fallback: bool) -> ThreadingHTTPServer:
+    try:
+        return ThreadingHTTPServer((host, port), make_handler(root))
+    except OSError:
+        if not allow_fallback or port == 0:
+            raise
+        server = ThreadingHTTPServer((host, 0), make_handler(root))
+        print(f"Port {port} is unavailable; using {server.server_port}.", flush=True)
+        return server
+
+
 def run_server(port: int | None = None) -> int:
     root = resolve_root(None)
     host = "127.0.0.1"
-    server = ThreadingHTTPServer((host, port or 0), make_handler(root))
+    bind_port = DEFAULT_PORT if port is None else port
+    server = bind_server(root, host, bind_port, allow_fallback=port is None)
     port = int(server.server_port)
     url = f"http://{host}:{port}/"
     print(f"Phaseharness dashboard running at {url}", flush=True)
@@ -3613,7 +3636,13 @@ def run_server(port: int | None = None) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Start one Phaseharness dashboard page for the current worktree.")
-    parser.add_argument("-p", "--port", type=int, default=0, help="port to bind; defaults to an available port")
+    parser.add_argument(
+        "-p",
+        "--port",
+        type=parse_port,
+        default=None,
+        help=f"port to bind; defaults to {DEFAULT_PORT} with fallback to an available port",
+    )
     args = parser.parse_args()
 
     try:

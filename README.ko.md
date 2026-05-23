@@ -108,6 +108,8 @@ npx phaseharness@latest dashboard
 npx phaseharness@latest dashboard -p 6006
 ```
 
+기본적으로 `http://127.0.0.1:4673/`을 먼저 사용하고, 4673이 사용 중이면 빈 포트로 fallback합니다.
+
 대시보드는 현재 active run, 단계 진행 상황, 산출물, 진단 정보, run history를 보여줍니다.
 
 ## 프로젝트 지침 연결

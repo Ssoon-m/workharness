@@ -34,7 +34,6 @@ DEFAULT_SKILL_TARGETS = {
     "codex": [".codex/skills"],
     "claude": [".claude/skills"],
 }
-LEGACY_CODEX_SKILL_TARGETS = [".agents/skills"]
 INSTALL_PATH = Path(".phaseharness") / "install.json"
 HOOK_MARKER = ".phaseharness"
 
@@ -97,20 +96,9 @@ def normalize_install(data: dict[str, Any]) -> dict[str, Any]:
             existing = existing_agents.get(agent, {})
             if isinstance(existing, dict):
                 agents[agent].update(existing)
-            agents[agent] = normalize_agent_config(agent, agents[agent])
     sync = install["skill_sync"]
-    existing_sync = data.get("skill_sync", {})
-    if isinstance(existing_sync, dict) and isinstance(existing_sync.get("source"), str):
-        sync["source"] = existing_sync["source"]
     sync.setdefault("source", ".phaseharness/skills")
     return install
-
-
-def normalize_agent_config(agent: str, config: dict[str, Any]) -> dict[str, Any]:
-    if agent == "codex" and config.get("skill_targets") == LEGACY_CODEX_SKILL_TARGETS:
-        config = dict(config)
-        config["skill_targets"] = DEFAULT_SKILL_TARGETS["codex"]
-    return config
 
 
 def load_install(root: Path) -> dict[str, Any]:
