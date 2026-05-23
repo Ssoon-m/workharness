@@ -18,6 +18,13 @@
         "description": "Additional project documentation to consider only when it is relevant to the requested change.",
         "priority": "recommended"
       }
+    ],
+    "skills": [
+      {
+        "name": "frontend-convention",
+        "description": "Frontend component, styling, responsive behavior, accessibility, and validation conventions to apply when the task touches UI.",
+        "priority": "recommended"
+      }
     ]
   },
   "evaluate": {
@@ -30,6 +37,13 @@
       {
         "path": "CONTRIBUTING.md",
         "description": "Repository-wide contribution expectations to use as baseline review guidance.",
+        "priority": "recommended"
+      }
+    ],
+    "skills": [
+      {
+        "name": "frontend-convention",
+        "description": "Frontend review criteria for UI diffs, responsive stability, accessibility, and validation evidence.",
         "priority": "recommended"
       }
     ],

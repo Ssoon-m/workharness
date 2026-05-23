@@ -35,11 +35,11 @@
       "properties": {
         "path": {
           "type": "string",
-          "description": "Repository-relative path to a single document."
+          "description": "PhaseHarness install-root-relative path to a single document."
         },
         "glob": {
           "type": "string",
-          "description": "Repository-relative glob for a group of documents."
+          "description": "PhaseHarness install-root-relative glob for a group of documents."
         },
         "description": {
           "type": "string",
@@ -60,6 +60,26 @@
         }
       ]
     },
+    "skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Agent skill name to consult during the stage."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What this skill should contribute to the stage."
+        },
+        "priority": {
+          "$ref": "#/$defs/priority"
+        }
+      },
+      "required": ["name", "description", "priority"]
+    },
     "stage_config": {
       "type": "object",
       "additionalProperties": false,
@@ -68,6 +88,13 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/document"
+          },
+          "default": []
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/skill"
           },
           "default": []
         }
@@ -81,6 +108,13 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/document"
+          },
+          "default": []
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/skill"
           },
           "default": []
         },

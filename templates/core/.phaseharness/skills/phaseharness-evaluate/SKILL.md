@@ -34,12 +34,13 @@ python3 .phaseharness/bin/phaseharness-state.py start --mode manual --stage eval
 Before creating the reviewer request, run:
 
 ```bash
-python3 "$(git rev-parse --show-toplevel)/.phaseharness/skills/evaluate/scripts/render-evaluation-config.py" --run-id <run-id>
+python3 .phaseharness/skills/phaseharness-evaluate/scripts/render-evaluation-config.py --run-id <run-id>
 ```
 
 If no run id is available, omit `--run-id`. Use the rendered output as the rendered evaluation config.
 
 Document lines use `source` `(kind, priority, status)`: description. Status describes path/glob availability, not whether the guidance applies to the current diff.
+Skill lines use `name` `(skill, priority, configured)`: description. `configured` means the project asked evaluate to consult that skill; it does not prove the current agent has the skill installed.
 
 For a phaseharness run, pass the reviewer relevant excerpts from `clarify.md`, `context.md`, `plan.md`, and `phases/*.md`, plus completed phases, current diff, validation commands, and the rendered evaluation config.
 
@@ -60,6 +61,14 @@ For every document line in the rendered evaluation config, record exactly one ou
 - If relevant to the diff, record the concrete criterion under `Evaluation Checks`.
 - If not relevant, record it under `Evaluation Checks` with `result: skipped`.
 - If unavailable (`missing`, `no_matches`, `not_a_file`, `unreadable`, or `invalid`), record it under `Risks`.
+
+For every skill line in the rendered evaluation config, record exactly one outcome:
+
+- If the skill is available and relevant to the diff, consult it and record concrete criteria under `Evaluation Checks`.
+- If the skill is available but not relevant to the diff, record it under `Evaluation Checks` with `result: skipped`.
+- If a `required` skill is unavailable, record it under `Risks`.
+
+Do not copy full skill contents into the artifact. Capture only task-relevant review criteria, evidence, and implications.
 
 Apply rule lines from the rendered evaluation config only when relevant or unconditional, and record outcomes under `Evaluation Checks`. The rendered evaluation config supplements run artifacts; it does not replace them and must not cause product code edits.
 

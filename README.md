@@ -12,7 +12,7 @@ The harness keeps durable run state under `.phaseharness/runs/<run-id>/`, record
 
 ## Install
 
-Run PhaseHarness from the repository where you want to use it:
+Run PhaseHarness from the directory where you want to install it:
 
 ```bash
 npx phaseharness@latest init
@@ -24,7 +24,7 @@ For pnpm users, the equivalent command is:
 pnpm dlx phaseharness@latest init
 ```
 
-The installer checks that the target is a git repository and that `python3` is available. It then asks which agents to integrate with:
+The installer checks that the current directory is inside a git repository and that `python3` is available. In a monorepo, run `init` from the package or app directory you want PhaseHarness to manage. It then asks which agents to integrate with:
 
 ```text
 [x] Codex
@@ -125,7 +125,9 @@ cp .phaseharness/context.example.json .phaseharness/context.json
 Then edit `.phaseharness/context.json`:
 
 - `context-gather.documents`: documents used for planning context
+- `context-gather.skills`: agent skills to consult for task-relevant conventions
 - `evaluate.documents`: documents used during review
+- `evaluate.skills`: agent skills to consult for review criteria
 - `evaluate.rules`: additional review rules
 
 ## Commands

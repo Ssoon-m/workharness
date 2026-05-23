@@ -12,7 +12,7 @@ clarify -> context-gather -> plan -> generate -> evaluate
 
 ## 설치
 
-PhaseHarness를 사용할 저장소에서 실행하세요.
+PhaseHarness를 설치할 디렉터리에서 실행하세요.
 
 ```bash
 npx phaseharness@latest init
@@ -24,7 +24,7 @@ pnpm 사용자는 아래처럼 실행할 수 있습니다.
 pnpm dlx phaseharness@latest init
 ```
 
-installer는 대상이 git 저장소인지, `python3`를 사용할 수 있는지 확인한 뒤 어떤 agent와 연결할지 물어봅니다.
+installer는 현재 디렉터리가 git 저장소 안인지, `python3`를 사용할 수 있는지 확인합니다. 모노레포에서는 PhaseHarness가 관리할 package/app 디렉터리에서 `init`을 실행하세요. 그다음 어떤 agent와 연결할지 물어봅니다.
 
 ```text
 [x] Codex
@@ -125,7 +125,9 @@ cp .phaseharness/context.example.json .phaseharness/context.json
 그다음 `.phaseharness/context.json`을 수정합니다.
 
 - `context-gather.documents`: 계획 전 참고할 문서
+- `context-gather.skills`: 작업 관련 convention을 확인할 agent skill
 - `evaluate.documents`: 검토 때 참고할 문서
+- `evaluate.skills`: 검토 기준으로 참고할 agent skill
 - `evaluate.rules`: 추가 검토 규칙
 
 ## 명령어

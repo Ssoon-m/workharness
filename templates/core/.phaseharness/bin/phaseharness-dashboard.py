@@ -38,11 +38,15 @@ def find_project_root(start: Path | None = None) -> Path:
     current = (start or Path.cwd()).expanduser().resolve()
     if current.is_file():
         current = current.parent
-    while current != current.parent:
-        if (current / ".phaseharness").is_dir() or (current / ".git").exists():
+    while True:
+        if (current / ".phaseharness").is_dir():
             return current
+        if (current / ".git").exists():
+            break
+        if current == current.parent:
+            break
         current = current.parent
-    raise RuntimeError("could not find project root")
+    raise RuntimeError("could not find phaseharness root")
 
 
 def resolve_root(root_arg: str | None) -> Path:

@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { requireGitRoot, requirePython, run } from "../lib/project.mjs";
+import { requireInstallRoot, requirePython, run } from "../lib/project.mjs";
 
 function parsePort(value) {
   if (!/^\d+$/.test(value)) {
@@ -15,10 +15,10 @@ function parsePort(value) {
 export function registerDashboard(program) {
   program
     .command("dashboard")
-    .description("Start the PhaseHarness dashboard for the current git project")
+    .description("Start the PhaseHarness dashboard for the nearest install")
     .option("-p, --port <port>", "port to bind; defaults to 4673 with fallback to an available port", parsePort)
     .action((options) => {
-      const root = requireGitRoot();
+      const root = requireInstallRoot();
       requirePython();
       const dashboard = resolve(root, ".phaseharness/bin/phaseharness-dashboard.py");
       const args = [dashboard];

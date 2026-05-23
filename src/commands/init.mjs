@@ -8,7 +8,7 @@ import {
   installTemplate,
   parseAgents,
   readJson,
-  requireGitRoot,
+  requireTargetRoot,
   requirePython,
   runBridge,
   writeJson
@@ -17,12 +17,12 @@ import {
 export function registerInit(program, context) {
   program
     .command("init")
-    .description("Install PhaseHarness into the current git project")
+    .description("Install PhaseHarness into the current directory")
     .option("--agents <agents>", "comma-separated agents to enable: codex,claude")
     .option("-y, --yes", "use defaults for prompts")
     .option("--force", "overwrite existing PhaseHarness managed payload files")
     .action(async (options) => {
-      const root = requireGitRoot();
+      const root = requireTargetRoot();
       requirePython();
       const installPath = resolve(root, ".phaseharness/install.json");
       const existing = readJson(installPath, {});

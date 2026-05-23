@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { requireGitRoot, run } from "../lib/project.mjs";
+import { findInstallRoot, run } from "../lib/project.mjs";
 
 export function registerDoctor(program) {
   program
@@ -8,10 +8,19 @@ export function registerDoctor(program) {
     .description("Inspect PhaseHarness installation health")
     .option("--json", "print JSON only")
     .action((options) => {
-      const root = requireGitRoot();
+      const root = findInstallRoot();
       const issues = [];
       if (run("python3", ["--version"]).status !== 0) {
         issues.push({ level: "error", message: "python3 is not available on PATH" });
+      }
+      if (!root) {
+        issues.push({ level: "error", message: "missing .phaseharness/install.json at or above the current directory" });
+      }
+      if (!root || issues.some((issue) => issue.level === "error")) {
+        const payload = { ok: false, issues };
+        console.log(JSON.stringify(payload, null, 2));
+        process.exitCode = 1;
+        return;
       }
       if (!existsSync(resolve(root, ".phaseharness/install.json"))) {
         issues.push({ level: "error", message: "missing .phaseharness/install.json" });

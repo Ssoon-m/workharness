@@ -32,9 +32,13 @@ def find_project_root(input_data: dict[str, object], root_arg: str | None = None
     if start.is_file():
         start = start.parent
     current = start
-    while current != current.parent:
+    while True:
         if (current / ".phaseharness").is_dir():
             return current
+        if (current / ".git").exists():
+            break
+        if current == current.parent:
+            break
         current = current.parent
     return None
 

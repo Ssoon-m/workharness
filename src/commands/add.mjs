@@ -4,7 +4,7 @@ import {
   buildInstallManifest,
   parseAgents,
   readJson,
-  requireGitRoot,
+  requireInstallRoot,
   requirePython,
   runBridge,
   writeJson
@@ -21,7 +21,7 @@ export function registerAdd(program, context) {
         throw new Error(`Unknown agent: ${agent}`);
       }
       const [selected] = selectedAgents;
-      const root = requireGitRoot();
+      const root = requireInstallRoot();
       requirePython();
       const installPath = resolve(root, ".phaseharness/install.json");
       const existing = readJson(installPath, null);

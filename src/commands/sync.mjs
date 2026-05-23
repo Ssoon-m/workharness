@@ -1,4 +1,4 @@
-import { requireGitRoot, requirePython, runBridge } from "../lib/project.mjs";
+import { requireInstallRoot, requirePython, runBridge } from "../lib/project.mjs";
 
 export function registerSync(program) {
   program
@@ -6,7 +6,7 @@ export function registerSync(program) {
     .description("Sync PhaseHarness skills into enabled agent skill directories")
     .option("--provider <provider>", "provider to sync: codex, claude, or all", "all")
     .action((options) => {
-      const root = requireGitRoot();
+      const root = requireInstallRoot();
       requirePython();
       runBridge(root, [
         "reconcile",

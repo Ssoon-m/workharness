@@ -33,12 +33,13 @@ python3 .phaseharness/bin/phaseharness-state.py start --mode manual --stage cont
 Before broad repository inspection, run:
 
 ```bash
-python3 "$(git rev-parse --show-toplevel)/.phaseharness/skills/context-gather/scripts/render-context-config.py"
+python3 .phaseharness/skills/phaseharness-context-gather/scripts/render-context-config.py
 ```
 
 Use the rendered output as the rendered context config.
 
 Document lines use `source` `(kind, priority, status)`: description. Status describes path/glob availability, not task relevance.
+Skill lines use `name` `(skill, priority, configured)`: description. `configured` means the project asked context-gather to consult that skill; it does not prove the current agent has the skill installed.
 
 For every configured document in the rendered context config, record exactly one outcome:
 
@@ -47,6 +48,14 @@ For every configured document in the rendered context config, record exactly one
 - If the document is unavailable (`missing`, `no_matches`, `not_a_file`, `unreadable`, or `invalid`), record it under `Risks`.
 
 `required` means the document must be checked for relevance. It does not force the document into `Referenced Documents`.
+
+For every configured skill in the rendered context config, record exactly one outcome:
+
+- If the skill is available and affects this task, consult it and record it under `Referenced Skills`.
+- If the skill is available but does not affect this task, record it under `Skipped Context`.
+- If a `required` skill is unavailable, record it under `Risks`.
+
+Do not copy full skill contents into the artifact. Capture only task-relevant rules, constraints, and planning implications.
 
 Gather only context that can affect the requested implementation: target files, architecture boundaries, API/data/component contracts, coding conventions, validation commands, or risks that could change the plan.
 
@@ -68,6 +77,13 @@ Write `.phaseharness/runs/<run-id>/artifacts/context.md`:
 ## Referenced Documents
 
 - path:
+- reason:
+- applied_rules:
+- planning_implication:
+
+## Referenced Skills
+
+- skill:
 - reason:
 - applied_rules:
 - planning_implication:

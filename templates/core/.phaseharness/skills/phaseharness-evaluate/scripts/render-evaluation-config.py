@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 from typing import Any
@@ -11,11 +12,17 @@ CONFIG_WARNING_KEY = "__phaseharness_context_warning"
 
 def find_project_root(start: Path | None = None) -> Path:
     current = (start or Path.cwd()).resolve()
-    while current != current.parent:
-        if (current / ".phaseharness").is_dir() or (current / ".git").is_dir():
-            return current
+    if current.is_file():
         current = current.parent
-    raise RuntimeError("could not find project root")
+    while True:
+        if (current / ".phaseharness").is_dir():
+            return current
+        if (current / ".git").exists():
+            break
+        if current == current.parent:
+            break
+        current = current.parent
+    raise RuntimeError("could not find phaseharness root")
 
 
 def load_config(root: Path) -> dict[str, Any] | None:
@@ -84,10 +91,28 @@ def render_doc(root: Path, item: Any) -> list[str]:
     return lines
 
 
+def render_skill(item: Any) -> list[str]:
+    if not isinstance(item, dict):
+        return ["- invalid entry: not an object"]
+    name = str(item.get("name", ""))
+    if not name:
+        return ["- invalid entry: missing name"]
+    priority = item.get("priority", "unspecified")
+    description = item.get("description", "")
+    line = f"- `{name}` (skill, {priority}, configured)"
+    if description:
+        line += f": {description}"
+    return [line]
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Render evaluate context config as markdown.")
+    parser.add_argument("--run-id", default="", help="Optional run id used to replace <run-id> in configured rules.")
+    args = parser.parse_args()
+
     root = find_project_root(Path(__file__).parent)
     config = load_config(root)
-    print("# Context-Gather Config")
+    print("# Evaluation Config")
     print()
     if config is None:
         print("No active `.phaseharness/context.json`.")
@@ -96,13 +121,36 @@ def main() -> int:
     if isinstance(warning, str):
         print(f"Warning: {warning}")
         return 0
-    context_gather = config.get("context-gather", {})
-    docs = context_gather.get("documents", []) if isinstance(context_gather, dict) else []
-    if not isinstance(docs, list) or not docs:
-        print("No configured context-gather documents.")
-        return 0
-    for item in docs:
-        print("\n".join(render_doc(root, item)))
+    evaluate = config.get("evaluate", {})
+    docs = evaluate.get("documents", []) if isinstance(evaluate, dict) else []
+    skills = evaluate.get("skills", []) if isinstance(evaluate, dict) else []
+    rules = evaluate.get("rules", []) if isinstance(evaluate, dict) else []
+
+    if isinstance(docs, list) and docs:
+        print("## Documents")
+        for item in docs:
+            print("\n".join(render_doc(root, item)))
+    else:
+        print("No configured evaluation documents.")
+
+    if isinstance(skills, list) and skills:
+        print()
+        print("## Skills")
+        for item in skills:
+            print("\n".join(render_skill(item)))
+    else:
+        print("No configured evaluation skills.")
+
+    if isinstance(rules, list) and rules:
+        print()
+        print("## Rules")
+        for rule in rules:
+            text = str(rule)
+            if args.run_id:
+                text = text.replace("<run-id>", args.run_id)
+            print(f"- {text}")
+    else:
+        print("No configured evaluation rules.")
     return 0
 
 

@@ -1,6 +1,6 @@
 # Installing PhaseHarness
 
-Install PhaseHarness in the target repository:
+Install PhaseHarness in the target directory:
 
 ```bash
 npx phaseharness@latest init
@@ -9,6 +9,8 @@ pnpm dlx phaseharness@latest init
 ```
 
 Choose Codex, Claude, or both when prompted.
+
+In a monorepo, run `init` from the package or app directory you want PhaseHarness to manage. PhaseHarness installs into the current directory, not the git top-level directory.
 
 Non-interactive examples:
 

@@ -31,12 +31,48 @@ export function run(command, args, options = {}) {
   return result;
 }
 
-export function requireGitRoot(cwd = process.cwd()) {
-  const result = run("git", ["rev-parse", "--show-toplevel"], { cwd });
-  if (result.status !== 0) {
-    throw new Error("PhaseHarness must be installed from inside a git repository.");
+export function requireGitRepository(cwd = process.cwd()) {
+  const result = run("git", ["rev-parse", "--is-inside-work-tree"], { cwd });
+  if (result.status !== 0 || result.stdout.trim() !== "true") {
+    throw new Error("PhaseHarness must be initialized from inside a git repository.");
   }
-  return result.stdout.trim();
+}
+
+export function requireTargetRoot(cwd = process.cwd()) {
+  requireGitRepository(cwd);
+  return resolve(cwd);
+}
+
+export function findInstallRoot(cwd = process.cwd()) {
+  let current = resolve(cwd);
+  if (existsSync(current) && statSync(current).isFile()) {
+    current = dirname(current);
+  }
+  while (true) {
+    if (existsSync(resolve(current, ".phaseharness/install.json"))) {
+      return current;
+    }
+    if (isGitBoundary(current)) {
+      return null;
+    }
+    const parent = dirname(current);
+    if (parent === current) {
+      return null;
+    }
+    current = parent;
+  }
+}
+
+export function requireInstallRoot(cwd = process.cwd()) {
+  const root = findInstallRoot(cwd);
+  if (!root) {
+    throw new Error("PhaseHarness is not installed at or above the current directory. Run phaseharness init from the target project directory.");
+  }
+  return root;
+}
+
+function isGitBoundary(path) {
+  return existsSync(resolve(path, ".git"));
 }
 
 export function requirePython() {

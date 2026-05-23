@@ -13,23 +13,14 @@ from typing import Any
 
 AGENTS = ("codex", "claude")
 SKILLS = [
-    "clarify",
-    "context-gather",
-    "plan",
-    "generate",
-    "evaluate",
-    "commit",
+    "phaseharness-clarify",
+    "phaseharness-context-gather",
+    "phaseharness-plan",
+    "phaseharness-generate",
+    "phaseharness-evaluate",
+    "phaseharness-commit",
     "phaseharness",
 ]
-TARGET_SKILL_NAMES = {
-    "clarify": "phaseharness-clarify",
-    "context-gather": "phaseharness-context-gather",
-    "plan": "phaseharness-plan",
-    "generate": "phaseharness-generate",
-    "evaluate": "phaseharness-evaluate",
-    "commit": "phaseharness-commit",
-    "phaseharness": "phaseharness",
-}
 DEFAULT_SKILL_TARGETS = {
     "codex": [".codex/skills"],
     "claude": [".claude/skills"],
@@ -46,11 +37,15 @@ def find_project_root(start: Path | None = None) -> Path:
     current = (start or Path.cwd()).resolve()
     if current.is_file():
         current = current.parent
-    while current != current.parent:
-        if (current / ".phaseharness").is_dir() or (current / ".git").exists():
+    while True:
+        if (current / ".phaseharness").is_dir():
             return current
+        if (current / ".git").exists():
+            break
+        if current == current.parent:
+            break
         current = current.parent
-    raise RuntimeError("could not find project root")
+    raise RuntimeError("could not find phaseharness root")
 
 
 def load_json_object(path: Path) -> dict[str, Any]:
@@ -149,20 +144,24 @@ def ensure_state_files(root: Path) -> list[Path]:
 def command_for(runtime: str, event: str) -> str:
     script = f"{runtime}-{event}.sh"
     if runtime == "claude":
-        return (
-            "sh -c 'root=\"$(git -C \"${CLAUDE_PROJECT_DIR:-$PWD}\" rev-parse --show-toplevel 2>/dev/null || printf %s \"${CLAUDE_PROJECT_DIR:-$PWD}\")\"; "
-            f"f=\"$root/.phaseharness/hooks/{script}\"; "
-            "[ -x \"$f\" ] && exec \"$f\"; "
-            "exit 0'"
-        )
-    if runtime == "codex":
-        return (
-            "sh -c 'root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; "
-            f"f=\"$root/.phaseharness/hooks/{script}\"; "
-            "[ -x \"$f\" ] && exec \"$f\"; "
-            "exit 0'"
-        )
-    raise ValueError(runtime)
+        start = "${CLAUDE_PROJECT_DIR:-$PWD}"
+    elif runtime == "codex":
+        start = "$PWD"
+    else:
+        raise ValueError(runtime)
+    return (
+        f"sh -c 'dir=\"{start}\"; "
+        "if [ -f \"$dir\" ]; then dir=\"$(dirname \"$dir\")\"; fi; "
+        "while :; do "
+        f"f=\"$dir/.phaseharness/hooks/{script}\"; "
+        "[ -x \"$f\" ] && exec \"$f\"; "
+        "[ -e \"$dir/.git\" ] && break; "
+        "parent=\"$(dirname \"$dir\")\"; "
+        "[ \"$parent\" = \"$dir\" ] && break; "
+        "dir=\"$parent\"; "
+        "done; "
+        "exit 0'"
+    )
 
 
 def hook_entry(runtime: str, event: str) -> dict[str, Any]:
@@ -312,8 +311,7 @@ def reconcile_provider(root: Path, install: dict[str, Any], provider: str, *, in
         changed.extend(str(path.relative_to(root)) for path in install_hooks(root, provider))
     for source in discover_skill_dirs(root, source_rel):
         for target_root in targets:
-            target_name = TARGET_SKILL_NAMES.get(source.name, f"phaseharness-{source.name}")
-            path = copy_skill(source, root / target_root / target_name)
+            path = copy_skill(source, root / target_root / source.name)
             changed.append(str(path.relative_to(root)))
     return {"provider": provider, "changed": sorted(set(changed))}
 
