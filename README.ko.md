@@ -49,7 +49,7 @@ pnpm dlx phaseharness@latest init --agents codex,claude
 
 선택한 agent만 SessionStart 때 reconcile됩니다.
 
-- Codex: `.codex/config.toml`, `.codex/hooks.json`, `.agents/skills`
+- Codex: `.codex/config.toml`, `.codex/hooks.json`, `.codex/skills`
 - Claude: `.claude/settings.json`, `.claude/skills`
 
 `.phaseharness/skills`가 원본입니다. Codex/Claude 쪽 skill 디렉터리는 이 원본에서 복사된 generated bridge output입니다. symlink는 사용하지 않습니다.

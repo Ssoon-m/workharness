@@ -15,9 +15,10 @@ import { dirname, join, resolve } from "node:path";
 
 export const AGENTS = ["codex", "claude"];
 export const DEFAULT_SKILL_TARGETS = {
-  codex: [".agents/skills"],
+  codex: [".codex/skills"],
   claude: [".claude/skills"]
 };
+const LEGACY_CODEX_SKILL_TARGETS = [".agents/skills"];
 
 export function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -146,6 +147,7 @@ export function buildInstallManifest({ packageVersion, agents, existing = {} }) 
       if (existing.agents[agent] && typeof existing.agents[agent] === "object") {
         next.agents[agent] = { ...next.agents[agent], ...existing.agents[agent] };
       }
+      next.agents[agent] = normalizeAgentConfig(agent, next.agents[agent]);
     }
   }
   if (existing.skill_sync && typeof existing.skill_sync === "object") {
@@ -155,6 +157,18 @@ export function buildInstallManifest({ packageVersion, agents, existing = {} }) 
     next.agents[agent].enabled = true;
   }
   return next;
+}
+
+function normalizeAgentConfig(agent, config) {
+  if (
+    agent === "codex" &&
+    Array.isArray(config.skill_targets) &&
+    config.skill_targets.length === LEGACY_CODEX_SKILL_TARGETS.length &&
+    config.skill_targets.every((target, index) => target === LEGACY_CODEX_SKILL_TARGETS[index])
+  ) {
+    return { ...config, skill_targets: DEFAULT_SKILL_TARGETS.codex };
+  }
+  return config;
 }
 
 export function runBridge(root, args, { stdio = "inherit" } = {}) {
