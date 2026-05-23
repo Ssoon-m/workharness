@@ -172,8 +172,6 @@ def hook_entry(runtime: str, event: str) -> dict[str, Any]:
     }
     if runtime == "codex" and event == "stop":
         entry["statusMessage"] = "Checking phaseharness state"
-    if runtime == "codex" and event == "session-start":
-        entry["statusMessage"] = "Syncing phaseharness bridges"
     return entry
 
 
@@ -208,6 +206,33 @@ def merge_hook(data: dict[str, Any], event: str, matcher: str, entry: dict[str, 
     entries.append(entry)
 
 
+def remove_phaseharness_hooks_except(data: dict[str, Any], keep_events: set[str]) -> None:
+    hooks_root = data.get("hooks")
+    if not isinstance(hooks_root, dict):
+        return
+    for event, groups in list(hooks_root.items()):
+        if event in keep_events:
+            continue
+        if not isinstance(groups, list):
+            continue
+        next_groups: list[Any] = []
+        for group in groups:
+            if not isinstance(group, dict):
+                next_groups.append(group)
+                continue
+            existing = group.get("hooks")
+            if isinstance(existing, list):
+                group["hooks"] = [item for item in existing if not command_is_phaseharness(item)]
+            if group.get("hooks"):
+                next_groups.append(group)
+        if next_groups:
+            hooks_root[event] = next_groups
+        else:
+            hooks_root.pop(event, None)
+    if not hooks_root:
+        data.pop("hooks", None)
+
+
 def ensure_codex_feature_flag(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     text = path.read_text(encoding="utf-8") if path.exists() else ""
@@ -234,20 +259,19 @@ def ensure_codex_feature_flag(path: Path) -> None:
 def install_hooks(root: Path, provider: str) -> list[Path]:
     changed: list[Path] = []
     make_executable(root / ".phaseharness" / "hooks" / f"{provider}-stop.sh")
-    make_executable(root / ".phaseharness" / "hooks" / f"{provider}-session-start.sh")
     if provider == "codex":
         config_path = root / ".codex" / "config.toml"
         hooks_path = root / ".codex" / "hooks.json"
         ensure_codex_feature_flag(config_path)
         data = load_json_object(hooks_path)
-        merge_hook(data, "SessionStart", "startup|resume|clear", hook_entry("codex", "session-start"))
+        remove_phaseharness_hooks_except(data, {"Stop"})
         merge_hook(data, "Stop", "", hook_entry("codex", "stop"))
         write_json(hooks_path, data)
         changed.extend([config_path, hooks_path])
     elif provider == "claude":
         path = root / ".claude" / "settings.json"
         data = load_json_object(path)
-        merge_hook(data, "SessionStart", "startup|resume|clear|compact", hook_entry("claude", "session-start"))
+        remove_phaseharness_hooks_except(data, {"Stop"})
         merge_hook(data, "Stop", "", hook_entry("claude", "stop"))
         write_json(path, data)
         changed.append(path)

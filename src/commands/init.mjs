@@ -5,6 +5,7 @@ import {
   AGENTS,
   buildInstallManifest,
   enabledAgents,
+  installPackageDependencies,
   ensurePackageScripts,
   ensureRuntimeState,
   installTemplate,
@@ -23,11 +24,15 @@ export function registerInit(program, context) {
     .option("--agents <agents>", "comma-separated agents to enable: codex,claude")
     .option("-y, --yes", "use defaults for prompts")
     .option("--force", "overwrite existing PhaseHarness managed payload files")
+    .option("--no-install", "skip package manager install after updating package.json")
     .action(async (options) => {
       const root = requireTargetRoot();
       requirePython();
       const installPath = resolve(root, ".phaseharness/install.json");
       const existing = readJson(installPath, {});
+      if (existsSync(installPath) && !options.force) {
+        throw new Error("PhaseHarness is already installed. Run phaseharness upgrade to update it, or phaseharness add agent to enable another agent.");
+      }
       if (existsSync(resolve(root, ".phaseharness")) && !existsSync(installPath) && !options.force) {
         throw new Error("Existing .phaseharness payload found. Re-run with --force to overwrite it.");
       }
@@ -50,9 +55,9 @@ export function registerInit(program, context) {
       }
       const result = installTemplate({ packageRoot: context.packageRoot, targetRoot: root, force: Boolean(options.force) });
       ensureRuntimeState(root);
-      const packageScripts = ensurePackageScripts(root);
-      const packageVersion = options.force || !existing.package_version ? context.packageVersion : existing.package_version;
-      const install = buildInstallManifest({ packageVersion, agents, existing });
+      const packageScripts = ensurePackageScripts(root, { packageVersion: context.packageVersion });
+      const packageInstall = installPackageDependencies(root, packageScripts, { enabled: options.install !== false });
+      const install = buildInstallManifest({ packageVersion: context.packageVersion, agents, existing });
       writeJson(installPath, install);
       for (const agent of agents) {
         const args = ["install", "--provider", agent];
@@ -62,6 +67,7 @@ export function registerInit(program, context) {
         console.log(`Existing PhaseHarness skills backed up to ${result.skillsBackup}.`);
       }
       logPackageScripts(packageScripts);
+      logPackageInstall(packageInstall);
       console.log(`PhaseHarness installed for ${agents.join(", ")}.`);
     });
 }
@@ -73,5 +79,20 @@ function logPackageScripts(result) {
   }
   if (result.changed.length) {
     console.log(`Added package scripts: ${result.changed.join(", ")}.`);
+  }
+  if (result.removed.length) {
+    console.log(`Removed package scripts: ${result.removed.join(", ")}.`);
+  }
+  if (result.dependencyChanged) {
+    console.log("Pinned phaseharness in devDependencies.");
+  }
+}
+
+function logPackageInstall(result) {
+  if (result.status === "installed") {
+    console.log(`Installed package dependencies with ${result.manager}.`);
+  }
+  if (result.status === "skipped") {
+    console.log(`Skipped package dependency install. Run ${result.manager} install before using package scripts.`);
   }
 }

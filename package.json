@@ -1,6 +1,6 @@
 {
   "name": "phaseharness",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Install and manage PhaseHarness workflows in AI coding projects.",
   "keywords": [
     "codex",

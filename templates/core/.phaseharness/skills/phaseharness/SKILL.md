@@ -16,19 +16,13 @@ clarify -> context-gather -> plan -> generate -> evaluate
 ## Start Or Resume
 
 1. Summarize the task in one sentence.
-2. Reconcile installed provider bridges:
-
-```bash
-python3 .phaseharness/bin/phaseharness-bridge.py reconcile --provider all --install-hooks
-```
-
-3. Check active state:
+2. Check active state:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-state.py status --json
 ```
 
-4. If an active run exists in this worktree, do not create a new run and do not automatically resume. Ask the user to choose:
+3. If an active run exists in this worktree, do not create a new run and do not automatically resume. Ask the user to choose:
 
 - `resume`: bind the existing active run to the current session and continue it.
 - `start-new`: pause the existing active run, clear this worktree's active slot, and start the current request as a new run in this same worktree.
@@ -52,9 +46,9 @@ If the user chooses `resume`, run:
 python3 .phaseharness/bin/phaseharness-state.py resume --json
 ```
 
-Then continue with step 7.
+Then continue with step 6.
 
-If the user chooses `start-new`, continue to step 5. In step 6, create the new run with:
+If the user chooses `start-new`, continue to step 4. In step 5, create the new run with:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-state.py start-new --request "<request>" --loop-count <count> --commit-mode <none|phase|final> --json
@@ -62,7 +56,7 @@ python3 .phaseharness/bin/phaseharness-state.py start-new --request "<request>" 
 
 This command validates the new run, parks the existing active run with `manual_pause`, clears this worktree's active slot, and creates the new active run. It only updates `.phaseharness` run state. It does not clean the working tree, reset files, or clear git staging. If file isolation is needed, use `start-new-in-worktree` instead.
 
-If the user chooses `start-new-in-worktree`, first confirm loop count and commit mode using the same defaults from step 5 when values are missing. Then run:
+If the user chooses `start-new-in-worktree`, first confirm loop count and commit mode using the same defaults from step 4 when values are missing. Then run:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-worktree.py create --request "<request>" --loop-count <count> --commit-mode <none|phase|final> --json
@@ -78,7 +72,7 @@ Tell the user the worktree path, harness path, branch, and run id. Tell them to 
 
 Do not tell the user to run `phaseharness-state.py` commands directly for the new worktree handoff. Do not run handoff continuation commands in the current session. The current session remains bound to the original worktree. Do not bind a second run to the current session and do not ask the user to repeat the original request.
 
-5. Before creating a new auto run, ask for:
+4. Before creating a new auto run, ask for:
 
 - loop count: maximum number of `generate -> evaluate` cycles
 - commit mode: `none`, `phase`, or `final`
@@ -102,13 +96,13 @@ Phaseharness 실행 옵션을 먼저 확인할게요.
 기본값으로 진행할까요? 또는 `loop count 3, commit mode final`처럼 지정해주세요.
 ```
 
-6. Create the run. Auto runs bind to the current provider session. If the runner cannot infer the session id, stop and report the error instead of creating an unbound auto run. If `start-new` was selected, use the `start-new` command shown above instead of this command:
+5. Create the run. Auto runs bind to the current provider session. If the runner cannot infer the session id, stop and report the error instead of creating an unbound auto run. If `start-new` was selected, use the `start-new` command shown above instead of this command:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-state.py start --mode auto --request "<request>" --loop-count <count> --commit-mode <none|phase|final> --json
 ```
 
-7. Get and execute the first continuation prompt:
+6. Get and execute the first continuation prompt:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-state.py next --require-auto --reprompt-running --require-session-binding --json
