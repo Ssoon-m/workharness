@@ -20,8 +20,16 @@ SKILLS = [
     "evaluate",
     "commit",
     "phaseharness",
-    "phaseharness-dashboard",
 ]
+TARGET_SKILL_NAMES = {
+    "clarify": "phaseharness-clarify",
+    "context-gather": "phaseharness-context-gather",
+    "plan": "phaseharness-plan",
+    "generate": "phaseharness-generate",
+    "evaluate": "phaseharness-evaluate",
+    "commit": "phaseharness-commit",
+    "phaseharness": "phaseharness",
+}
 DEFAULT_SKILL_TARGETS = {
     "codex": [".codex/skills"],
     "claude": [".claude/skills"],
@@ -316,7 +324,8 @@ def reconcile_provider(root: Path, install: dict[str, Any], provider: str, *, in
         changed.extend(str(path.relative_to(root)) for path in install_hooks(root, provider))
     for source in discover_skill_dirs(root, source_rel):
         for target_root in targets:
-            path = copy_skill(source, root / target_root / source.name)
+            target_name = TARGET_SKILL_NAMES.get(source.name, f"phaseharness-{source.name}")
+            path = copy_skill(source, root / target_root / target_name)
             changed.append(str(path.relative_to(root)))
     return {"provider": provider, "changed": sorted(set(changed))}
 

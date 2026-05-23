@@ -102,8 +102,10 @@ commit mode: none
 
 Ask the agent:
 
-```text
-Use `phaseharness-dashboard` to show the dashboard.
+```bash
+npx phaseharness@latest dashboard
+# or choose a port
+npx phaseharness@latest dashboard -p 6006
 ```
 
 The dashboard shows the current active run, stage progress, generated outputs, diagnostics, and run history.
@@ -129,6 +131,7 @@ phaseharness init
 phaseharness add codex
 phaseharness add claude
 phaseharness sync
+phaseharness dashboard
 phaseharness doctor
 ```
 

@@ -1,6 +1,6 @@
 ---
-name: generate
-description: Use when the user explicitly invokes generate for an existing phase file, or when a phaseharness continuation asks for the generate stage. Implements exactly one planned phase and is not a general implementation request handler.
+name: phaseharness-generate
+description: Use when the user explicitly invokes phaseharness-generate for an existing phase file, or when a phaseharness continuation asks for the generate stage. Implements exactly one planned phase and is not a general implementation request handler.
 ---
 
 # Generate

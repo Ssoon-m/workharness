@@ -38,4 +38,4 @@ Reprompt of running stage: `{{REPROMPT}}`
 
 ## Commit Handling
 
-If this prompt is a commit prompt rather than a stage prompt, use the `commit` skill. The state runner and Stop hook never run `git commit`.
+If this prompt is a commit prompt rather than a stage prompt, use the `phaseharness-commit` skill. The state runner and Stop hook never run `git commit`.

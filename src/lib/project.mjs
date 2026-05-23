@@ -19,6 +19,11 @@ export const DEFAULT_SKILL_TARGETS = {
   claude: [".claude/skills"]
 };
 const LEGACY_CODEX_SKILL_TARGETS = [".agents/skills"];
+const OBSOLETE_TEMPLATE_PATHS = [
+  ".phaseharness/manifest.json",
+  ".phaseharness/bin/phaseharness-update.py",
+  ".phaseharness/skills/phaseharness-dashboard"
+];
 
 export function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -183,6 +188,7 @@ export function runBridge(root, args, { stdio = "inherit" } = {}) {
 
 export function installTemplate({ packageRoot, targetRoot, force }) {
   const source = resolve(packageRoot, "templates/core");
+  removeObsoleteTemplatePaths(targetRoot);
   copyDirectory(source, targetRoot, { force });
   normalizeTemplateGitignore(targetRoot);
   for (const file of [
@@ -190,6 +196,7 @@ export function installTemplate({ packageRoot, targetRoot, force }) {
     ".phaseharness/bin/phaseharness-sync-bridges.py",
     ".phaseharness/bin/phaseharness-state.py",
     ".phaseharness/bin/phaseharness-hook.py",
+    ".phaseharness/bin/phaseharness-dashboard.py",
     ".phaseharness/bin/phaseharness-worktree.py",
     ".phaseharness/hooks/codex-session-start.sh",
     ".phaseharness/hooks/codex-stop.sh",
@@ -197,6 +204,12 @@ export function installTemplate({ packageRoot, targetRoot, force }) {
     ".phaseharness/hooks/claude-stop.sh"
   ]) {
     ensureExecutable(resolve(targetRoot, file));
+  }
+}
+
+function removeObsoleteTemplatePaths(targetRoot) {
+  for (const item of OBSOLETE_TEMPLATE_PATHS) {
+    rmSync(resolve(targetRoot, item), { force: true, recursive: true });
   }
 }
 

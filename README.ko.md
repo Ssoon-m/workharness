@@ -102,8 +102,10 @@ commit mode: none
 
 에이전트에게 아래처럼 요청하세요.
 
-```text
-Use `phaseharness-dashboard` to show the dashboard.
+```bash
+npx phaseharness@latest dashboard
+# 포트를 직접 지정하려면
+npx phaseharness@latest dashboard -p 6006
 ```
 
 대시보드는 현재 active run, 단계 진행 상황, 산출물, 진단 정보, run history를 보여줍니다.
@@ -129,6 +131,7 @@ phaseharness init
 phaseharness add codex
 phaseharness add claude
 phaseharness sync
+phaseharness dashboard
 phaseharness doctor
 ```
 

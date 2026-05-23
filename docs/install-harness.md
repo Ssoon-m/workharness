@@ -41,3 +41,11 @@ Run health checks:
 npx phaseharness@latest doctor
 pnpm dlx phaseharness@latest doctor
 ```
+
+Start the dashboard:
+
+```bash
+npx phaseharness@latest dashboard
+npx phaseharness@latest dashboard -p 6006
+pnpm dlx phaseharness@latest dashboard
+```

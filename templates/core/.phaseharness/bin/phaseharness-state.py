@@ -21,11 +21,11 @@ except ImportError:  # pragma: no cover - phaseharness hooks currently target Un
 STAGES = ["clarify", "context_gather", "plan", "generate", "evaluate"]
 USER_WAIT_STAGE = "clarify"
 STAGE_SKILLS = {
-    "clarify": "clarify",
-    "context_gather": "context-gather",
-    "plan": "plan",
-    "generate": "generate",
-    "evaluate": "evaluate",
+    "clarify": "phaseharness-clarify",
+    "context_gather": "phaseharness-context-gather",
+    "plan": "phaseharness-plan",
+    "generate": "phaseharness-generate",
+    "evaluate": "phaseharness-evaluate",
 }
 ARTIFACTS = {
     "clarify": "artifacts/clarify.md",
@@ -657,7 +657,7 @@ def build_commit_prompt(root: Path, state: dict[str, Any], key: str, mode: str, 
     phase_line = implementation_phase or "final"
     return (
         "# Phaseharness Commit Prompt\n\n"
-        "Use the `commit` skill now. The state runner is only asking for a commit; it has not staged files and has not run `git commit`.\n\n"
+        "Use the `phaseharness-commit` skill now. The state runner is only asking for a commit; it has not staged files and has not run `git commit`.\n\n"
         f"Run id: `{state['run_id']}`\n"
         f"Commit key: `{key}`\n"
         f"Commit mode: `{mode}`\n"

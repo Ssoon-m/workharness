@@ -1,6 +1,6 @@
 ---
-name: evaluate
-description: Use when the user explicitly invokes evaluate, or when a phaseharness continuation asks for the evaluate stage. Delegates current diff verification to a fresh reviewer subagent and records pass, warn, or fail without product code edits.
+name: phaseharness-evaluate
+description: Use when the user explicitly invokes phaseharness-evaluate, or when a phaseharness continuation asks for the evaluate stage. Delegates current diff verification to a fresh reviewer subagent and records pass, warn, or fail without product code edits.
 ---
 
 # Evaluate
@@ -9,7 +9,7 @@ Evaluate verifies the current diff and records `pass`, `warn`, or `fail`. It doe
 
 ## Run State
 
-- If `evaluate` is run directly without a run id, create a manual run:
+- If `phaseharness-evaluate` is run directly without a run id, create a manual run:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-state.py start --mode manual --stage evaluate --request "<request>" --commit-mode none --json

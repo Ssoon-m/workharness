@@ -1,6 +1,6 @@
 ---
-name: context-gather
-description: Use when the user explicitly invokes context-gather, or when a phaseharness continuation asks for the context-gather stage. Collects repository facts, relevant files, patterns, constraints, risks, docs, and validation commands without product code edits.
+name: phaseharness-context-gather
+description: Use when the user explicitly invokes phaseharness-context-gather, or when a phaseharness continuation asks for the context-gather stage. Collects repository facts, relevant files, patterns, constraints, risks, docs, and validation commands without product code edits.
 ---
 
 # Context Gather
@@ -10,7 +10,7 @@ Context gather records repository facts needed for planning. It does not impleme
 ## Run State
 
 - Use the continuation run id when provided.
-- If `context-gather` is run directly without a run id, create a manual run:
+- If `phaseharness-context-gather` is run directly without a run id, create a manual run:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-state.py start --mode manual --stage context-gather --request "<request>" --commit-mode none --json

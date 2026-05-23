@@ -1,6 +1,6 @@
 ---
-name: clarify
-description: Use when the user explicitly invokes clarify, or when a phaseharness continuation asks for the clarify stage. Turns a request into executable requirements, success criteria, scope, non-goals, decisions, assumptions, and open questions without implementation.
+name: phaseharness-clarify
+description: Use when the user explicitly invokes phaseharness-clarify, or when a phaseharness continuation asks for the clarify stage. Turns a request into executable requirements, success criteria, scope, non-goals, decisions, assumptions, and open questions without implementation.
 ---
 
 # Clarify
@@ -10,7 +10,7 @@ Clarify converts the user request into an executable contract. It does not imple
 ## Run State
 
 - If a phaseharness continuation supplied a run id, use that run.
-- If the user invoked `clarify` directly without a run id, create a manual run:
+- If the user invoked `phaseharness-clarify` directly without a run id, create a manual run:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-state.py start --mode manual --stage clarify --request "<request>" --commit-mode none --json

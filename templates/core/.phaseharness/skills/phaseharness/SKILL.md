@@ -141,10 +141,10 @@ python3 .phaseharness/bin/phaseharness-state.py next --require-auto --reprompt-r
 
 ## Manual Skills
 
-- `clarify`, `context-gather`, `plan`, `generate`, and `evaluate` can be run directly.
+- `phaseharness-clarify`, `phaseharness-context-gather`, `phaseharness-plan`, `phaseharness-generate`, and `phaseharness-evaluate` can be run directly.
 - Direct skill runs perform one stage and stop.
 - Manual runs do not activate Stop-hook continuation.
-- If the user later says "modify based on that", treat it as a normal direct implementation request unless they explicitly invoke `generate` with a phase file.
+- If the user later says "modify based on that", treat it as a normal direct implementation request unless they explicitly invoke `phaseharness-generate` with a phase file.
 
 ## Stage Responsibilities
 
@@ -153,7 +153,7 @@ python3 .phaseharness/bin/phaseharness-state.py next --require-auto --reprompt-r
 - An explicit user request to pause or stop the run is handled with `pause` at any stage.
 - Only `clarify` may pause for missing user input with `wait-user`; later stages must proceed with documented assumptions, risks, blockers, or an error state.
 - Subagents do not call state commands, change run lifecycle, or commit.
-- The main session writes artifacts, updates state, and handles commit prompts with `commit`.
+- The main session writes artifacts, updates state, and handles commit prompts with `phaseharness-commit`.
 
 ## Commit Modes
 

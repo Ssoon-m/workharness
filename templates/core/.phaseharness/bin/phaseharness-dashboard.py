@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -3593,10 +3594,10 @@ def make_handler(root: Path) -> type[BaseHTTPRequestHandler]:
     return DashboardHandler
 
 
-def run_server() -> int:
+def run_server(port: int | None = None) -> int:
     root = resolve_root(None)
     host = "127.0.0.1"
-    server = ThreadingHTTPServer((host, 0), make_handler(root))
+    server = ThreadingHTTPServer((host, port or 0), make_handler(root))
     port = int(server.server_port)
     url = f"http://{host}:{port}/"
     print(f"Phaseharness dashboard running at {url}", flush=True)
@@ -3611,17 +3612,12 @@ def run_server() -> int:
 
 
 def main() -> int:
-    if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
-        print("usage: render-dashboard.py")
-        print()
-        print("Start one Phaseharness dashboard page for the current worktree.")
-        return 0
-    if len(sys.argv) > 1:
-        print("error: render-dashboard.py does not accept options", file=sys.stderr)
-        return 2
+    parser = argparse.ArgumentParser(description="Start one Phaseharness dashboard page for the current worktree.")
+    parser.add_argument("-p", "--port", type=int, default=0, help="port to bind; defaults to an available port")
+    args = parser.parse_args()
 
     try:
-        return run_server()
+        return run_server(args.port)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

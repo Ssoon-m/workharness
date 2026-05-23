@@ -7,6 +7,7 @@ import { registerInit } from "./commands/init.mjs";
 import { registerAdd } from "./commands/add.mjs";
 import { registerSync } from "./commands/sync.mjs";
 import { registerDoctor } from "./commands/doctor.mjs";
+import { registerDashboard } from "./commands/dashboard.mjs";
 
 export const cliDir = dirname(fileURLToPath(import.meta.url));
 export const packageRoot = resolve(cliDir, "..");
@@ -23,6 +24,7 @@ registerInit(program, { packageRoot, packageVersion: pkg.version });
 registerAdd(program, { packageRoot, packageVersion: pkg.version });
 registerSync(program);
 registerDoctor(program);
+registerDashboard(program);
 
 program.parseAsync(process.argv).catch((error) => {
   console.error(`error: ${error.message}`);

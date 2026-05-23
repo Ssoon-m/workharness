@@ -1,6 +1,6 @@
 ---
-name: plan
-description: Use when the user explicitly invokes plan, or when a phaseharness continuation asks for the plan stage. Creates a planning artifact and self-contained phase files without implementation.
+name: phaseharness-plan
+description: Use when the user explicitly invokes phaseharness-plan, or when a phaseharness continuation asks for the plan stage. Creates a planning artifact and self-contained phase files without implementation.
 ---
 
 # Plan
@@ -10,7 +10,7 @@ Plan creates executable phase files for later `generate` runs. It does not imple
 ## Run State
 
 - Use the continuation run id when provided.
-- If `plan` is run directly without a run id, create a manual run:
+- If `phaseharness-plan` is run directly without a run id, create a manual run:
 
 ```bash
 python3 .phaseharness/bin/phaseharness-state.py start --mode manual --stage plan --request "<request>" --commit-mode none --json

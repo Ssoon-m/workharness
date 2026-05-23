@@ -1,6 +1,6 @@
 ---
-name: commit
-description: Use when the user explicitly asks to commit, or when a phaseharness commit prompt asks for a meaningful manual commit for commit_mode phase or final.
+name: phaseharness-commit
+description: Use when the user explicitly invokes phaseharness-commit, or when a phaseharness commit prompt asks for a meaningful manual commit for commit_mode phase or final.
 ---
 
 # Commit
