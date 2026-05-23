@@ -46,7 +46,7 @@ export function registerInit(program, context) {
           });
         }
       }
-      installTemplate({ packageRoot: context.packageRoot, targetRoot: root, force: Boolean(options.force) });
+      const result = installTemplate({ packageRoot: context.packageRoot, targetRoot: root, force: Boolean(options.force) });
       ensureRuntimeState(root);
       const packageVersion = options.force || !existing.package_version ? context.packageVersion : existing.package_version;
       const install = buildInstallManifest({ packageVersion, agents, existing });
@@ -54,6 +54,9 @@ export function registerInit(program, context) {
       for (const agent of agents) {
         const args = ["install", "--provider", agent];
         runBridge(root, args);
+      }
+      if (result.skillsBackup) {
+        console.log(`Existing PhaseHarness skills backed up to ${result.skillsBackup}.`);
       }
       console.log(`PhaseHarness installed for ${agents.join(", ")}.`);
     });

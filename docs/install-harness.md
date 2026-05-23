@@ -33,6 +33,8 @@ npx phaseharness@latest init -y --force
 pnpm dlx phaseharness@latest init -y --force
 ```
 
+Before replacing `.phaseharness/skills`, `init --force` backs up the current skill source to `.phaseharness/backups/skills-<timestamp>/`.
+
 `sync` overwrites enabled agent hooks and generated skill copies from the installed `.phaseharness/skills` source. It does not download or replace the core `.phaseharness` payload.
 
 Run health checks:

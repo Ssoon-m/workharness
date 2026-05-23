@@ -70,6 +70,8 @@ npx phaseharness@latest init -y --force
 pnpm dlx phaseharness@latest init -y --force
 ```
 
+`init --force`는 `.phaseharness/skills`를 교체하기 전에 현재 skill 원본을 `.phaseharness/backups/skills-<timestamp>/`에 백업합니다.
+
 수동으로 skill 복사본을 동기화하려면:
 
 ```bash

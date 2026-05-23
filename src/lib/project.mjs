@@ -164,6 +164,7 @@ export function runBridge(root, args, { stdio = "inherit" } = {}) {
 
 export function installTemplate({ packageRoot, targetRoot, force }) {
   const source = resolve(packageRoot, "templates/core");
+  const skillsBackup = force ? backupSkillsBeforeOverwrite(targetRoot) : null;
   copyDirectory(source, targetRoot, { force });
   normalizeTemplateGitignore(targetRoot);
   for (const file of [
@@ -180,6 +181,40 @@ export function installTemplate({ packageRoot, targetRoot, force }) {
   ]) {
     ensureExecutable(resolve(targetRoot, file));
   }
+  return { skillsBackup };
+}
+
+function backupSkillsBeforeOverwrite(targetRoot) {
+  const skillsPath = resolve(targetRoot, ".phaseharness/skills");
+  if (!existsSync(skillsPath) || !statSync(skillsPath).isDirectory()) {
+    return null;
+  }
+  const backupsRoot = resolve(targetRoot, ".phaseharness/backups");
+  mkdirSync(backupsRoot, { recursive: true });
+  const baseName = `skills-${formatBackupTimestamp(new Date())}`;
+  let name = baseName;
+  let suffix = 2;
+  while (existsSync(resolve(backupsRoot, name))) {
+    name = `${baseName}-${suffix}`;
+    suffix += 1;
+  }
+  const backupPath = resolve(backupsRoot, name);
+  cpSync(skillsPath, backupPath, { recursive: true });
+  rmSync(skillsPath, { force: true, recursive: true });
+  return `.phaseharness/backups/${name}`;
+}
+
+function formatBackupTimestamp(date) {
+  const pad = (value, size = 2) => String(value).padStart(size, "0");
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate())
+  ].join("") + "-" + [
+    pad(date.getHours()),
+    pad(date.getMinutes()),
+    pad(date.getSeconds())
+  ].join("") + `-${pad(date.getMilliseconds(), 3)}`;
 }
 
 function normalizeTemplateGitignore(targetRoot) {

@@ -2,5 +2,6 @@ state/*
 !state/.gitkeep
 runs/*
 !runs/.gitkeep
+backups/*
 prompts/.generated/
 *.lock

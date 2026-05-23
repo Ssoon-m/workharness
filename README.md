@@ -70,6 +70,8 @@ npx phaseharness@latest init -y --force
 pnpm dlx phaseharness@latest init -y --force
 ```
 
+Before replacing `.phaseharness/skills`, `init --force` backs up the current skill source to `.phaseharness/backups/skills-<timestamp>/`.
+
 To manually sync generated skill copies:
 
 ```bash
