@@ -16,15 +16,15 @@ import {
 export function registerUpgrade(program, context) {
   program
     .command("upgrade")
-    .description("Upgrade the nearest PhaseHarness install to this package payload")
+    .description("Upgrade the nearest WorkHarness install to this package payload")
     .option("--no-install", "skip package manager install after updating package.json")
     .action((options) => {
       const root = requireInstallRoot();
       requirePython();
-      const installPath = resolve(root, ".phaseharness/install.json");
+      const installPath = resolve(root, ".workharness/install.json");
       const existing = readJson(installPath, null);
       if (!existing) {
-        throw new Error("PhaseHarness is not installed. Run phaseharness init first.");
+        throw new Error("WorkHarness is not installed. Run workharness init first.");
       }
       const agents = enabledAgents(existing);
       const result = installTemplate({ packageRoot: context.packageRoot, targetRoot: root, force: true });
@@ -39,11 +39,11 @@ export function registerUpgrade(program, context) {
       writeJson(installPath, install);
       runBridge(root, ["reconcile", "--provider", "all", "--install-hooks"]);
       if (result.skillsBackup) {
-        console.log(`Existing PhaseHarness skills backed up to ${result.skillsBackup}.`);
+        console.log(`Existing WorkHarness skills backed up to ${result.skillsBackup}.`);
       }
       logPackageScripts(packageScripts);
       logPackageInstall(packageInstall);
-      console.log(`PhaseHarness upgraded from ${existing.package_version ?? "unknown"} to ${context.packageVersion}.`);
+      console.log(`WorkHarness upgraded from ${existing.package_version ?? "unknown"} to ${context.packageVersion}.`);
     });
 }
 
@@ -59,7 +59,7 @@ function logPackageScripts(result) {
     console.log(`Removed package scripts: ${result.removed.join(", ")}.`);
   }
   if (result.dependencyChanged) {
-    console.log("Pinned phaseharness in devDependencies.");
+    console.log("Pinned workharness in devDependencies.");
   }
 }
 

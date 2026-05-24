@@ -14,7 +14,7 @@ import {
 export function registerAdd(program, context) {
   const add = program
     .command("add")
-    .description("Add PhaseHarness resources to an existing install")
+    .description("Add WorkHarness resources to an existing install")
     .allowExcessArguments(false)
     .action(() => {
       add.help();
@@ -22,7 +22,7 @@ export function registerAdd(program, context) {
 
   add
     .command("agent")
-    .description("Add an agent integration to an existing PhaseHarness install")
+    .description("Add an agent integration to an existing WorkHarness install")
     .argument("[agent]", "agent to add: codex, claude, or comma-separated values")
     .action(async (agent) => {
       await addAgents({ agent, context });
@@ -32,14 +32,14 @@ export function registerAdd(program, context) {
 async function addAgents({ agent, context }) {
   const root = requireInstallRoot();
   requirePython();
-  const installPath = resolve(root, ".phaseharness/install.json");
+  const installPath = resolve(root, ".workharness/install.json");
   const existing = readJson(installPath, null);
   if (!existing) {
-    throw new Error("PhaseHarness is not installed. Run phaseharness init first.");
+    throw new Error("WorkHarness is not installed. Run workharness init first.");
   }
   const currentlyEnabled = AGENTS.filter((item) => existing.agents?.[item]?.enabled);
   if (!agent && currentlyEnabled.length === AGENTS.length) {
-    console.log("All supported PhaseHarness agent integrations are already installed.");
+    console.log("All supported WorkHarness agent integrations are already installed.");
     return;
   }
   const selectedAgents = agent
@@ -47,7 +47,7 @@ async function addAgents({ agent, context }) {
     : await promptAgents(currentlyEnabled);
   const agentsToInstall = selectedAgents.filter((item) => !currentlyEnabled.includes(item));
   if (!agentsToInstall.length) {
-    console.log("All selected PhaseHarness agent integrations are already installed.");
+    console.log("All selected WorkHarness agent integrations are already installed.");
     return;
   }
   const install = buildInstallManifest({
@@ -59,7 +59,7 @@ async function addAgents({ agent, context }) {
   for (const selected of agentsToInstall) {
     runBridge(root, ["install", "--provider", selected]);
   }
-  console.log(`PhaseHarness agent integration installed: ${agentsToInstall.join(", ")}.`);
+  console.log(`WorkHarness agent integration installed: ${agentsToInstall.join(", ")}.`);
 }
 
 function parseSelectedAgents(value) {
@@ -77,7 +77,7 @@ async function promptAgents(currentlyEnabled) {
     disabled: currentlyEnabled.includes(agent) ? "already installed" : false
   }));
   const selected = await checkbox({
-    message: "Which agents should PhaseHarness add?",
+    message: "Which agents should WorkHarness add?",
     choices,
     required: true
   });

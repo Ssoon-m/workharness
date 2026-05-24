@@ -19,59 +19,59 @@ export const DEFAULT_SKILL_TARGETS = {
   claude: [".claude/skills"]
 };
 const PACKAGE_SCRIPT_DEFINITIONS = {
-  "phaseharness:add-agent": {
-    current: "phaseharness add agent",
+  "workharness:add-agent": {
+    current: "workharness add agent",
     managed: [
-      "phaseharness add agent"
+      "workharness add agent"
     ]
   },
-  "phaseharness:dashboard": {
-    current: "phaseharness dashboard",
+  "workharness:dashboard": {
+    current: "workharness dashboard",
     managed: [
-      "phaseharness dashboard",
-      "npx phaseharness@latest dashboard"
+      "workharness dashboard",
+      "npx workharness@latest dashboard"
     ]
   },
-  "phaseharness:sync": {
-    current: "phaseharness sync",
+  "workharness:sync": {
+    current: "workharness sync",
     managed: [
-      "phaseharness sync",
-      "npx phaseharness@latest sync"
+      "workharness sync",
+      "npx workharness@latest sync"
     ]
   },
-  "phaseharness:doctor": {
-    current: "phaseharness doctor",
+  "workharness:doctor": {
+    current: "workharness doctor",
     managed: [
-      "phaseharness doctor",
-      "npx phaseharness@latest doctor"
+      "workharness doctor",
+      "npx workharness@latest doctor"
     ]
   }
 };
 const REMOVED_PACKAGE_SCRIPTS = {
-  "phaseharness:add": [
-    "phaseharness add"
+  "workharness:add": [
+    "workharness add"
   ],
-  "phaseharness:upgrade": [
-    "npx phaseharness@latest upgrade",
-    "phaseharness upgrade"
+  "workharness:upgrade": [
+    "npx workharness@latest upgrade",
+    "workharness upgrade"
   ]
 };
 export const PACKAGE_SCRIPTS = {
-  "phaseharness:add-agent": PACKAGE_SCRIPT_DEFINITIONS["phaseharness:add-agent"].current,
-  "phaseharness:dashboard": PACKAGE_SCRIPT_DEFINITIONS["phaseharness:dashboard"].current,
-  "phaseharness:sync": PACKAGE_SCRIPT_DEFINITIONS["phaseharness:sync"].current,
-  "phaseharness:doctor": PACKAGE_SCRIPT_DEFINITIONS["phaseharness:doctor"].current
+  "workharness:add-agent": PACKAGE_SCRIPT_DEFINITIONS["workharness:add-agent"].current,
+  "workharness:dashboard": PACKAGE_SCRIPT_DEFINITIONS["workharness:dashboard"].current,
+  "workharness:sync": PACKAGE_SCRIPT_DEFINITIONS["workharness:sync"].current,
+  "workharness:doctor": PACKAGE_SCRIPT_DEFINITIONS["workharness:doctor"].current
 };
 const MANAGED_TEMPLATE_DIRS = [
-  ".phaseharness/bin",
-  ".phaseharness/hooks",
-  ".phaseharness/prompts"
+  ".workharness/bin",
+  ".workharness/hooks",
+  ".workharness/prompts"
 ];
 const MANAGED_TEMPLATE_FILES = [
-  ".phaseharness/.gitignore",
-  ".phaseharness/context.example.json",
-  ".phaseharness/context.schema.json",
-  ".phaseharness/settings.example.json"
+  ".workharness/.gitignore",
+  ".workharness/context.example.json",
+  ".workharness/context.schema.json",
+  ".workharness/settings.example.json"
 ];
 
 export function run(command, args, options = {}) {
@@ -89,7 +89,7 @@ export function run(command, args, options = {}) {
 export function requireGitRepository(cwd = process.cwd()) {
   const result = run("git", ["rev-parse", "--is-inside-work-tree"], { cwd });
   if (result.status !== 0 || result.stdout.trim() !== "true") {
-    throw new Error("PhaseHarness must be initialized from inside a git repository.");
+    throw new Error("WorkHarness must be initialized from inside a git repository.");
   }
 }
 
@@ -104,7 +104,7 @@ export function findInstallRoot(cwd = process.cwd()) {
     current = dirname(current);
   }
   while (true) {
-    if (existsSync(resolve(current, ".phaseharness/install.json"))) {
+    if (existsSync(resolve(current, ".workharness/install.json"))) {
       return current;
     }
     if (isGitBoundary(current)) {
@@ -121,7 +121,7 @@ export function findInstallRoot(cwd = process.cwd()) {
 export function requireInstallRoot(cwd = process.cwd()) {
   const root = findInstallRoot(cwd);
   if (!root) {
-    throw new Error("PhaseHarness is not installed at or above the current directory. Run phaseharness init from the target project directory.");
+    throw new Error("WorkHarness is not installed at or above the current directory. Run workharness init from the target project directory.");
   }
   return root;
 }
@@ -133,7 +133,7 @@ function isGitBoundary(path) {
 export function requirePython() {
   const result = run("python3", ["--version"]);
   if (result.status !== 0) {
-    throw new Error("PhaseHarness requires python3 on PATH.");
+    throw new Error("WorkHarness requires python3 on PATH.");
   }
 }
 
@@ -188,7 +188,7 @@ export function ensurePackageScripts(root, { packageVersion } = {}) {
     }
   }
   const dependencyChanged = packageVersion
-    ? ensurePhaseHarnessDevDependency(pkg, packageVersion)
+    ? ensureWorkHarnessDevDependency(pkg, packageVersion)
     : false;
   if (changed.length || removed.length || dependencyChanged) {
     writeJson(packageJsonPath, pkg);
@@ -196,18 +196,18 @@ export function ensurePackageScripts(root, { packageVersion } = {}) {
   return { status: "ok", changed, removed, dependencyChanged };
 }
 
-function ensurePhaseHarnessDevDependency(pkg, packageVersion) {
+function ensureWorkHarnessDevDependency(pkg, packageVersion) {
   let changed = false;
   if (!pkg.devDependencies || typeof pkg.devDependencies !== "object" || Array.isArray(pkg.devDependencies)) {
     pkg.devDependencies = {};
     changed = true;
   }
-  if (pkg.devDependencies.phaseharness !== packageVersion) {
-    pkg.devDependencies.phaseharness = packageVersion;
+  if (pkg.devDependencies.workharness !== packageVersion) {
+    pkg.devDependencies.workharness = packageVersion;
     changed = true;
   }
-  if (pkg.dependencies && typeof pkg.dependencies === "object" && !Array.isArray(pkg.dependencies) && Object.hasOwn(pkg.dependencies, "phaseharness")) {
-    delete pkg.dependencies.phaseharness;
+  if (pkg.dependencies && typeof pkg.dependencies === "object" && !Array.isArray(pkg.dependencies) && Object.hasOwn(pkg.dependencies, "workharness")) {
+    delete pkg.dependencies.workharness;
     changed = true;
   }
   return changed;
@@ -224,7 +224,7 @@ export function installPackageDependencies(root, packageSetup, { enabled = true 
   const args = manager === "bun" ? ["install"] : ["install"];
   const result = run(manager, args, { cwd: root, stdio: "inherit" });
   if (result.status !== 0) {
-    throw new Error(`${manager} install failed. Re-run with --no-install to update PhaseHarness files without installing package dependencies.`);
+    throw new Error(`${manager} install failed. Re-run with --no-install to update WorkHarness files without installing package dependencies.`);
   }
   return { status: "installed", manager };
 }
@@ -281,7 +281,7 @@ export function ensureExecutable(path) {
 }
 
 export function ensureRuntimeState(root) {
-  const stateDir = resolve(root, ".phaseharness/state");
+  const stateDir = resolve(root, ".workharness/state");
   mkdirSync(stateDir, { recursive: true });
   const active = resolve(stateDir, "active.json");
   if (!existsSync(active)) {
@@ -302,7 +302,7 @@ export function ensureRuntimeState(root) {
   if (!existsSync(index)) {
     writeJson(index, { schema_version: 1, runs: [] });
   }
-  const runs = resolve(root, ".phaseharness/runs");
+  const runs = resolve(root, ".workharness/runs");
   mkdirSync(runs, { recursive: true });
   const keep = resolve(runs, ".gitkeep");
   if (!existsSync(keep)) {
@@ -327,7 +327,7 @@ export function buildInstallManifest({ packageVersion, agents, existing = {} }) 
     },
     skill_sync: {
       mode: "copy",
-      source: ".phaseharness/skills"
+      source: ".workharness/skills"
     }
   };
   if (existing.agents && typeof existing.agents === "object") {
@@ -349,10 +349,10 @@ export function enabledAgents(install) {
 }
 
 export function runBridge(root, args, { stdio = "inherit" } = {}) {
-  const bridge = resolve(root, ".phaseharness/bin/phaseharness-bridge.py");
+  const bridge = resolve(root, ".workharness/bin/workharness-bridge.py");
   const result = run("python3", [bridge, ...args], { cwd: root, stdio });
   if (result.status !== 0) {
-    throw new Error(`phaseharness bridge failed: ${args.join(" ")}`);
+    throw new Error(`workharness bridge failed: ${args.join(" ")}`);
   }
   return result;
 }
@@ -366,13 +366,13 @@ export function installTemplate({ packageRoot, targetRoot, force }) {
   copyDirectory(source, targetRoot, { force });
   normalizeTemplateGitignore(targetRoot);
   for (const file of [
-    ".phaseharness/bin/phaseharness-bridge.py",
-    ".phaseharness/bin/phaseharness-state.py",
-    ".phaseharness/bin/phaseharness-hook.py",
-    ".phaseharness/bin/phaseharness-dashboard.py",
-    ".phaseharness/bin/phaseharness-worktree.py",
-    ".phaseharness/hooks/codex-stop.sh",
-    ".phaseharness/hooks/claude-stop.sh"
+    ".workharness/bin/workharness-bridge.py",
+    ".workharness/bin/workharness-state.py",
+    ".workharness/bin/workharness-hook.py",
+    ".workharness/bin/workharness-dashboard.py",
+    ".workharness/bin/workharness-worktree.py",
+    ".workharness/hooks/codex-stop.sh",
+    ".workharness/hooks/claude-stop.sh"
   ]) {
     ensureExecutable(resolve(targetRoot, file));
   }
@@ -417,11 +417,11 @@ function pruneDirectory(source, target) {
 }
 
 function backupSkillsBeforeOverwrite(targetRoot) {
-  const skillsPath = resolve(targetRoot, ".phaseharness/skills");
+  const skillsPath = resolve(targetRoot, ".workharness/skills");
   if (!existsSync(skillsPath) || !statSync(skillsPath).isDirectory()) {
     return null;
   }
-  const backupsRoot = resolve(targetRoot, ".phaseharness/backups");
+  const backupsRoot = resolve(targetRoot, ".workharness/backups");
   mkdirSync(backupsRoot, { recursive: true });
   const baseName = `skills-${formatBackupTimestamp(new Date())}`;
   let name = baseName;
@@ -433,7 +433,7 @@ function backupSkillsBeforeOverwrite(targetRoot) {
   const backupPath = resolve(backupsRoot, name);
   cpSync(skillsPath, backupPath, { recursive: true });
   rmSync(skillsPath, { force: true, recursive: true });
-  return `.phaseharness/backups/${name}`;
+  return `.workharness/backups/${name}`;
 }
 
 function formatBackupTimestamp(date) {
@@ -450,8 +450,8 @@ function formatBackupTimestamp(date) {
 }
 
 function normalizeTemplateGitignore(targetRoot) {
-  const npmIgnore = resolve(targetRoot, ".phaseharness/.npmignore");
-  const gitIgnore = resolve(targetRoot, ".phaseharness/.gitignore");
+  const npmIgnore = resolve(targetRoot, ".workharness/.npmignore");
+  const gitIgnore = resolve(targetRoot, ".workharness/.gitignore");
   if (!existsSync(npmIgnore)) return;
   if (!existsSync(gitIgnore)) {
     renameSync(npmIgnore, gitIgnore);

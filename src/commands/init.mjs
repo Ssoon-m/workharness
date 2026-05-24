@@ -20,21 +20,21 @@ import {
 export function registerInit(program, context) {
   program
     .command("init")
-    .description("Install PhaseHarness into the current directory")
+    .description("Install WorkHarness into the current directory")
     .option("--agents <agents>", "comma-separated agents to enable: codex,claude")
     .option("-y, --yes", "use defaults for prompts")
-    .option("--force", "overwrite existing PhaseHarness managed payload files")
+    .option("--force", "overwrite existing WorkHarness managed payload files")
     .option("--no-install", "skip package manager install after updating package.json")
     .action(async (options) => {
       const root = requireTargetRoot();
       requirePython();
-      const installPath = resolve(root, ".phaseharness/install.json");
+      const installPath = resolve(root, ".workharness/install.json");
       const existing = readJson(installPath, {});
       if (existsSync(installPath) && !options.force) {
-        throw new Error("PhaseHarness is already installed. Run phaseharness upgrade to update it, or phaseharness add agent to enable another agent.");
+        throw new Error("WorkHarness is already installed. Run workharness upgrade to update it, or workharness add agent to enable another agent.");
       }
-      if (existsSync(resolve(root, ".phaseharness")) && !existsSync(installPath) && !options.force) {
-        throw new Error("Existing .phaseharness payload found. Re-run with --force to overwrite it.");
+      if (existsSync(resolve(root, ".workharness")) && !existsSync(installPath) && !options.force) {
+        throw new Error("Existing .workharness payload found. Re-run with --force to overwrite it.");
       }
       let agents = parseAgents(options.agents);
       if (!agents) {
@@ -43,7 +43,7 @@ export function registerInit(program, context) {
           if (!agents.length) agents = ["codex"];
         } else {
           agents = await checkbox({
-            message: "Which agents should PhaseHarness integrate with?",
+            message: "Which agents should WorkHarness integrate with?",
             choices: AGENTS.map((agent) => ({
               name: agent === "codex" ? "Codex" : "Claude",
               value: agent,
@@ -64,11 +64,11 @@ export function registerInit(program, context) {
         runBridge(root, args);
       }
       if (result.skillsBackup) {
-        console.log(`Existing PhaseHarness skills backed up to ${result.skillsBackup}.`);
+        console.log(`Existing WorkHarness skills backed up to ${result.skillsBackup}.`);
       }
       logPackageScripts(packageScripts);
       logPackageInstall(packageInstall);
-      console.log(`PhaseHarness installed for ${agents.join(", ")}.`);
+      console.log(`WorkHarness installed for ${agents.join(", ")}.`);
     });
 }
 
@@ -84,7 +84,7 @@ function logPackageScripts(result) {
     console.log(`Removed package scripts: ${result.removed.join(", ")}.`);
   }
   if (result.dependencyChanged) {
-    console.log("Pinned phaseharness in devDependencies.");
+    console.log("Pinned workharness in devDependencies.");
   }
 }
 

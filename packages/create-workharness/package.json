@@ -1,0 +1,38 @@
+{
+  "name": "create-workharness",
+  "version": "0.1.8",
+  "description": "Create WorkHarness installs in AI coding projects.",
+  "keywords": [
+    "workharness",
+    "cli",
+    "create",
+    "init",
+    "codex",
+    "claude"
+  ],
+  "homepage": "https://github.com/Ssoon-m/workharness/tree/main/packages/create-workharness#readme",
+  "bugs": {
+    "url": "https://github.com/Ssoon-m/workharness/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ssoon-m/workharness.git",
+    "directory": "packages/create-workharness"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "type": "module",
+  "bin": {
+    "create-workharness": "./index.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "README.md"
+  ],
+  "dependencies": {
+    "workharness": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "license": "MIT"
+}

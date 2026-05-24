@@ -15,9 +15,9 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0
 
-  packages/create-phaseharness:
+  packages/create-workharness:
     dependencies:
-      phaseharness:
+      workharness:
         specifier: workspace:*
         version: link:../..
 

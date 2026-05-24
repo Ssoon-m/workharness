@@ -3,7 +3,7 @@ import { requireInstallRoot, requirePython, runBridge } from "../lib/project.mjs
 export function registerSync(program) {
   program
     .command("sync")
-    .description("Sync PhaseHarness skills into enabled agent skill directories")
+    .description("Sync WorkHarness skills into enabled agent skill directories")
     .option("--provider <provider>", "provider to sync: codex, claude, or all", "all")
     .action((options) => {
       const root = requireInstallRoot();

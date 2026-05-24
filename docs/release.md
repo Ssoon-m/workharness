@@ -1,15 +1,15 @@
 # Release
 
-PhaseHarness publishes two npm packages from the same release tag:
+WorkHarness publishes two npm packages from the same release tag:
 
-- `phaseharness`
-- `create-phaseharness`
+- `workharness`
+- `create-workharness`
 
 Both package versions must match the pushed tag.
 
 ```bash
 pnpm version 0.1.8 --no-git-tag-version
-pnpm --dir packages/create-phaseharness version 0.1.8 --no-git-tag-version
+pnpm --dir packages/create-workharness version 0.1.8 --no-git-tag-version
 pnpm install
 pnpm run release:check
 

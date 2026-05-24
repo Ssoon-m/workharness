@@ -17,8 +17,8 @@ const pkg = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8"
 const program = new Command();
 
 program
-  .name("phaseharness")
-  .description("Install and manage PhaseHarness in a project")
+  .name("workharness")
+  .description("Install and manage WorkHarness in a project")
   .version(pkg.version);
 
 registerInit(program, { packageRoot, packageVersion: pkg.version });

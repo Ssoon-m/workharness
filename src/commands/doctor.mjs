@@ -5,7 +5,7 @@ import { findInstallRoot, run } from "../lib/project.mjs";
 export function registerDoctor(program) {
   program
     .command("doctor")
-    .description("Inspect PhaseHarness installation health")
+    .description("Inspect WorkHarness installation health")
     .option("--json", "print JSON only")
     .action((options) => {
       const root = findInstallRoot();
@@ -14,7 +14,7 @@ export function registerDoctor(program) {
         issues.push({ level: "error", message: "python3 is not available on PATH" });
       }
       if (!root) {
-        issues.push({ level: "error", message: "missing .phaseharness/install.json at or above the current directory" });
+        issues.push({ level: "error", message: "missing .workharness/install.json at or above the current directory" });
       }
       if (!root || issues.some((issue) => issue.level === "error")) {
         const payload = { ok: false, issues };
@@ -22,11 +22,11 @@ export function registerDoctor(program) {
         process.exitCode = 1;
         return;
       }
-      if (!existsSync(resolve(root, ".phaseharness/install.json"))) {
-        issues.push({ level: "error", message: "missing .phaseharness/install.json" });
+      if (!existsSync(resolve(root, ".workharness/install.json"))) {
+        issues.push({ level: "error", message: "missing .workharness/install.json" });
       }
-      if (!existsSync(resolve(root, ".phaseharness/bin/phaseharness-bridge.py"))) {
-        issues.push({ level: "error", message: "missing .phaseharness/bin/phaseharness-bridge.py" });
+      if (!existsSync(resolve(root, ".workharness/bin/workharness-bridge.py"))) {
+        issues.push({ level: "error", message: "missing .workharness/bin/workharness-bridge.py" });
       }
       if (issues.some((issue) => issue.level === "error")) {
         const payload = { ok: false, issues };
@@ -34,7 +34,7 @@ export function registerDoctor(program) {
         process.exitCode = 1;
         return;
       }
-      const bridge = resolve(root, ".phaseharness/bin/phaseharness-bridge.py");
+      const bridge = resolve(root, ".workharness/bin/workharness-bridge.py");
       const result = run("python3", [bridge, "doctor"], { cwd: root });
       if (result.stdout) process.stdout.write(result.stdout);
       if (result.stderr && !options.json) process.stderr.write(result.stderr);

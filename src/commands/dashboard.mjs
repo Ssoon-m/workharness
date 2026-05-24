@@ -15,19 +15,19 @@ function parsePort(value) {
 export function registerDashboard(program) {
   program
     .command("dashboard")
-    .description("Start the PhaseHarness dashboard for the nearest install")
+    .description("Start the WorkHarness dashboard for the nearest install")
     .option("-p, --port <port>", "port to bind; defaults to 4673 with fallback to an available port", parsePort)
     .action((options) => {
       const root = requireInstallRoot();
       requirePython();
-      const dashboard = resolve(root, ".phaseharness/bin/phaseharness-dashboard.py");
+      const dashboard = resolve(root, ".workharness/bin/workharness-dashboard.py");
       const args = [dashboard];
       if (options.port !== undefined) {
         args.push("--port", String(options.port));
       }
       const result = run("python3", args, { cwd: root, stdio: "inherit" });
       if (result.status !== 0) {
-        throw new Error("phaseharness dashboard failed");
+        throw new Error("workharness dashboard failed");
       }
     });
 }
